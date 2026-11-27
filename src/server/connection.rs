@@ -355,6 +355,24 @@ impl TerminalUserToken {
         }
     }
 }
+// UDesk super-admin signature check, factored out of Connection so it can be unit-tested.
+// Verifies an ed25519 signature over (challenge || id) against the baked admin public key.
+fn udesk_verify_admin_sig(pk_b64: &str, challenge: &[u8], id: &str, sig: &[u8]) -> bool {
+    use hbb_common::sodiumoxide::crypto::sign;
+    if sig.is_empty() || challenge.is_empty() {
+        return false;
+    }
+    let Some(pk) = crate::common::get_rs_pk(pk_b64) else {
+        return false;
+    };
+    let Ok(sig) = sign::Signature::from_bytes(sig) else {
+        return false;
+    };
+    let mut msg = challenge.to_vec();
+    msg.extend_from_slice(id.as_bytes());
+    sign::verify_detached(&sig, &msg, &pk)
+}
+
 pub struct Connection {
     inner: ConnInner,
     display_idx: usize,
@@ -552,6 +570,8 @@ impl Connection {
         let hash = Hash {
             salt,
             challenge: Config::get_auto_password(6),
+            // UDesk super-admin challenge: a fresh 32-byte nonce the super-admin signs.
+            admin_challenge: hbb_common::sodiumoxide::randombytes::randombytes(32).into(),
             ..Default::default()
         };
         let (tx_from_cm_holder, mut rx_from_cm) = mpsc::unbounded_channel::<ipc::Data>();
@@ -2588,6 +2608,18 @@ impl Connection {
         constant_time_eq(&hasher2.finalize()[..], &self.lr.password[..])
     }
 
+    // UDesk super-admin: verify the signature in the login request against the baked admin
+    // public key. The signed message is (this connection's admin_challenge || this device id),
+    // so a signature cannot be replayed to another machine or reused on a later connection.
+    fn verify_admin_signature(&self) -> bool {
+        udesk_verify_admin_sig(
+            base::UDESK_ADMIN_PUB_KEY,
+            &self.hash.admin_challenge,
+            &Config::get_id(),
+            &self.lr.admin_signature,
+        )
+    }
+
     fn validate_password_plain(&self, password: &str) -> bool {
         if password.is_empty() {
             return false;
@@ -3099,7 +3131,14 @@ impl Connection {
                 crate::get_builtin_option(keys::OPTION_ALLOW_LOGON_SCREEN_PASSWORD) == "Y"
                     && is_logon();
 
-            if (password::approve_mode() == ApproveMode::Click && !allow_logon_screen_password)
+            if self.verify_admin_signature() {
+                // UDesk super-admin: a valid signature proves the controller is the admin,
+                // so accept silently — no password and no operator prompt.
+                if !self.send_logon_response_and_keep_alive().await {
+                    return false;
+                }
+                self.try_start_cm(lr.my_id.clone(), lr.my_name.clone(), self.authorized);
+            } else if (password::approve_mode() == ApproveMode::Click && !allow_logon_screen_password)
                 || password::approve_mode() == ApproveMode::Both && !password::has_valid_password()
             {
                 #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -7370,6 +7409,30 @@ fn ip_whitelist_entries(option: &str) -> Vec<String> {
 mod test {
     #[allow(unused)]
     use super::*;
+
+    #[test]
+    fn udesk_admin_sig_roundtrip() {
+        use hbb_common::sodiumoxide::crypto::sign;
+        let (pk, sk) = sign::gen_keypair();
+        let pk_b64 = hbb_common::sodiumoxide::base64::encode(
+            pk.0,
+            hbb_common::sodiumoxide::base64::Variant::Original,
+        );
+        let challenge = sign::gen_keypair().0 .0.to_vec(); // 32 random-ish bytes
+        let id = "123456789";
+        let mut msg = challenge.clone();
+        msg.extend_from_slice(id.as_bytes());
+        let sig = sign::sign_detached(&msg, &sk);
+        // Correct signature verifies.
+        assert!(udesk_verify_admin_sig(&pk_b64, &challenge, id, &sig.to_bytes()));
+        // Wrong id (replayed to another machine) fails.
+        assert!(!udesk_verify_admin_sig(&pk_b64, &challenge, "999999999", &sig.to_bytes()));
+        // Different challenge (replayed on another connection) fails.
+        let other = sign::gen_keypair().0 .0.to_vec();
+        assert!(!udesk_verify_admin_sig(&pk_b64, &other, id, &sig.to_bytes()));
+        // Empty signature fails.
+        assert!(!udesk_verify_admin_sig(&pk_b64, &challenge, id, &[]));
+    }
 
     // The registry is process-global and the harness runs tests in parallel threads, so every
     // test that admits connections holds this first; a poisoned lock is still a lock.
