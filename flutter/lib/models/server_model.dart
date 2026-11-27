@@ -524,6 +524,8 @@ class ServerModel with ChangeNotifier {
     if (desktopType == DesktopType.cm) {
       if (_clients.isEmpty) {
         hideCmWindow();
+      } else if (_udeskAdminOnly()) {
+        hideCmWindow();
       } else if (!hideCm) {
         showCmWindow();
       }
@@ -533,6 +535,10 @@ class ServerModel with ChangeNotifier {
       if (isAndroid) androidUpdatekeepScreenOn();
     }
   }
+
+  // UDesk super-admin: keep the CM window hidden while every connected peer is the admin.
+  bool _udeskAdminOnly() =>
+      _clients.isNotEmpty && _clients.every((c) => c.isAdmin);
 
   void addConnection(Map<String, dynamic> evt) {
     try {
@@ -572,7 +578,7 @@ class ServerModel with ChangeNotifier {
         _clients.removeAt(index_disconnected);
         tabController.remove(index_disconnected);
       }
-      if (desktopType == DesktopType.cm && !hideCm) {
+      if (desktopType == DesktopType.cm && !hideCm && !_udeskAdminOnly()) {
         showCmWindow();
       }
       scrollToBottom();
@@ -833,6 +839,7 @@ class Client {
   bool privacyMode = false;
   bool disconnected = false;
   bool fromSwitch = false;
+  bool isAdmin = false;
   bool inVoiceCall = false;
   bool incomingVoiceCall = false;
 
@@ -862,6 +869,7 @@ class Client {
     privacyMode = json['privacy_mode'] ?? privacyMode;
     disconnected = json['disconnected'];
     fromSwitch = json['from_switch'];
+    isAdmin = json['is_admin'] ?? false;
     inVoiceCall = json['in_voice_call'];
     incomingVoiceCall = json['incoming_voice_call'];
   }

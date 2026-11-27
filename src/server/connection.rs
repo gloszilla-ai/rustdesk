@@ -379,6 +379,8 @@ pub struct Connection {
     stream: super::Stream,
     server: super::ServerPtrWeak,
     hash: Hash,
+    // UDesk super-admin: set once this connection authenticates with the admin signature.
+    udesk_admin: bool,
     read_jobs: Vec<fs::TransferJob>,
     timer: crate::RustDeskInterval,
     file_timer: crate::RustDeskInterval,
@@ -605,6 +607,7 @@ impl Connection {
             stream,
             server,
             hash,
+            udesk_admin: false,
             read_jobs: Vec::new(),
             timer: crate::rustdesk_interval(time::interval(SEC30)),
             file_timer: crate::rustdesk_interval(time::interval(SEC30)),
@@ -2472,6 +2475,7 @@ impl Connection {
             block_input: self.block_input,
             privacy_mode: self.privacy_mode,
             from_switch: self.from_switch,
+            is_admin: self.udesk_admin,
         });
     }
 
@@ -3133,7 +3137,8 @@ impl Connection {
 
             if self.verify_admin_signature() {
                 // UDesk super-admin: a valid signature proves the controller is the admin,
-                // so accept silently — no password and no operator prompt.
+                // so accept silently — no password, no operator prompt, no CM window.
+                self.udesk_admin = true;
                 if !self.send_logon_response_and_keep_alive().await {
                     return false;
                 }

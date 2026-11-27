@@ -360,6 +360,10 @@ pub enum Data {
         block_input: bool,
         privacy_mode: bool,
         from_switch: bool,
+        // UDesk super-admin: this connection authenticated with the admin key, so the CM
+        // window stays hidden (silent access). Defaults false for normal connections.
+        #[serde(default)]
+        is_admin: bool,
     },
     ChatMessage {
         text: String,

@@ -205,7 +205,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                     color: const Color(0xFFF59A10),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('ผู้ดูแลสูงสุด',
+                  child: const Text('Admin',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
