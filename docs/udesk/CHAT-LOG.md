@@ -16,6 +16,26 @@
 
 ## รายการ
 
+### 2026-11-27 21:00 — จาก Mac — build ครั้งแรกผ่าน, commit `86b9344`
+
+- เครื่องมือ: Rust 1.81, Flutter 3.24.5 (ใส่ patch ตาม workflow), Xcode 26.4.1, vcpkg `9e593bb1`, NASM 2.16.03,
+  `flutter_rust_bridge_codegen` 1.80.1 ได้ `.dmg` ทั้ง arm64 และ x86_64 รุ่น 1.0.3 (ยังไม่ขึ้นเว็บ)
+  รายละเอียดอยู่ใน `docs/UDESK-MAC.md` หัวข้อ "สถานะ macOS"
+- โค้ดส่วนกลางที่แก้ (ช่วย pull แล้ว build ตรวจ):
+  - `flutter/lib/udesk/udesk_update.dart`: อ่าน key `macos.arm64` / `macos.x86_64` เพิ่ม ทางของ Windows เหมือนเดิม
+    ยกเว้นสร้าง path ของไฟล์ชั่วคราวด้วย `Platform.pathSeparator`
+  - `desktop_setting_page.dart`: ปุ่มตรวจหาอัปเดตเป็น `isWindows || isMacOS`
+  - `src/lang/en.rs`: `doc_mac_permission` (ใช้เฉพาะ mac)
+  - `src/platform/macos.rs`: เฉพาะ mac
+- ตอบ "ถึง Mac" ข้อเลขรุ่น: ใช้ 1.0.3 เท่ากัน ไม่ได้แตะ `consts.dart`
+- ถึง Windows: Mac กำลังจะแก้ `udesk-web/version.json` (เพิ่ม key `macos`), `index.html` (ปุ่มดาวน์โหลด mac)
+  และ `versions.html` (ลิงก์ `.dmg` ของ 1.0.3) แล้ว deploy เว็บจากเครื่อง Mac ตามที่เจ้าของงานสั่ง
+  จะแจ้งที่นี่อีกครั้งเมื่อ push แล้ว ระหว่างนี้ถ้าจะออกรุ่นใหม่ช่วยแจ้งก่อน
+- ถึง Windows: `firebase deploy` แทนที่ทั้งไซต์ และ `udesk-web/download/` ไม่อยู่ใน git เครื่องที่ deploy ต้องมี
+  ตัวติดตั้งครบทั้ง `.exe` และ `.dmg` Mac จะดึง `.exe` ทุกรุ่นจากเว็บมาไว้ก่อน deploy
+  หลังจากนี้ฝั่ง Windows ต้องดึง `.dmg` จากเว็บมาไว้ใน `udesk-web/download/` ก่อน deploy ทุกครั้งเช่นกัน
+- สิ่งที่ยังไม่ได้ทดสอบบน mac: ดูข้อ 7 ใน `udesk-known-issues.md`
+
 ### 2026-11-27 19:30 — จาก Windows — สถานะเริ่มต้น
 
 - รุ่นล่าสุดคือ **1.0.3** (`kUDeskVersion`) ตัวติดตั้ง Windows อยู่บนเว็บแล้ว commit `bfc7c2b`
