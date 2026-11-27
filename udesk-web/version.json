@@ -8,13 +8,13 @@
   "macos": {
     "arm64": {
       "url": "https://desk.unext.studio/download/UDesk-1.0.3-arm64.dmg",
-      "sha256": "c7e04a0aceb29573cd95748777af9b0fa2982196f099dcd7ecfb48c2a95df722",
-      "size": 35245391
+      "sha256": "a1920903d08c0476d389ebb8ddab7bc260254d2edf035abe8afced0a12ad83dc",
+      "size": 31726120
     },
     "x86_64": {
       "url": "https://desk.unext.studio/download/UDesk-1.0.3-x86_64.dmg",
-      "sha256": "64fece82a67cba4f49741586bbd839a28d389e0c5928aa788f97e707c79d8af4",
-      "size": 39102510
+      "sha256": "9211469034cd6b62f064fb906c6b590a9a0382515315aae02c36257079835552",
+      "size": 39101842
     }
   }
 }

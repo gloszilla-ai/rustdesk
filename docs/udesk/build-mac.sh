@@ -51,6 +51,8 @@ if [[ -f "$secrets" ]]; then
 else
   echo "WARNING: $secrets not found, Google sign-in will not work in this build" >&2
 fi
+# macOS refuses to let Xcode rewrite a bundle that was already signed and notarized.
+rm -rf flutter/build/macos/Build/Products/Release/UDesk.app
 (
   cd flutter
   FLUTTER_XCODE_ARCHS=$arch FLUTTER_XCODE_ONLY_ACTIVE_ARCH=YES \

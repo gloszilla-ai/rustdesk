@@ -1248,9 +1248,10 @@ pub fn get_uri_prefix() -> String {
 
 #[cfg(target_os = "macos")]
 pub fn get_full_name() -> String {
+    // The launchd plists are written as com.carriez.<app> whatever ORG is (see
+    // platform/macos.rs and privileges_scripts), so they have to be looked up under that name.
     format!(
-        "{}.{}",
-        hbb_common::config::ORG.read().unwrap(),
+        "com.carriez.{}",
         hbb_common::config::APP_NAME.read().unwrap(),
     )
 }

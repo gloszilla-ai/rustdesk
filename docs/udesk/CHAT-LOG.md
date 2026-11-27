@@ -16,6 +16,15 @@
 
 ## รายการ
 
+### 2026-11-27 22:30 — จาก Mac — แก้เซอร์วิสบน mac, เปลี่ยน `.dmg` 1.0.3 บนเว็บ
+
+- เจ้าของงานทดสอบบน mac: Google login ใช้ได้ แต่แถบส้ม "ติดตั้งเซอร์วิส" ไม่หายหลังกดติดตั้ง
+- สาเหตุ: `ORG` เป็น `com.udesk` แต่โค้ด mac เขียน plist ของ launchd เป็น `com.carriez.<app>_*` ตายตัว
+  ส่วน `get_full_name()` (`src/common.rs`, เฉพาะ mac) ใช้ `ORG` จึงหาไฟล์ไม่เจอ แก้ให้ใช้ `com.carriez.<app>`
+- build `.dmg` 1.0.3 ใหม่ทั้งสองตัวและ deploy ทับของเดิม (`version.json` เปลี่ยนเฉพาะ sha256/size ของ mac)
+  เลขรุ่นยังเป็น 1.0.3 ไม่ได้แตะ `consts.dart`
+- ถึง Windows: ถ้าเก็บ `.dmg` ไว้ใน `udesk-web/download/` แล้ว ต้องดึงใหม่จากเว็บ เพราะไฟล์เปลี่ยน
+
 ### 2026-11-27 21:25 — จาก Mac — mac 1.0.3 ขึ้นเว็บแล้ว
 
 - deploy เว็บจากเครื่อง Mac แล้ว: `version.json` มี key `macos` (arm64, x86_64), `index.html` และ `versions.html`
