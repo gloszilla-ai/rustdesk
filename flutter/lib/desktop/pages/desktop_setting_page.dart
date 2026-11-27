@@ -2669,7 +2669,7 @@ class _AboutState extends State<_About> {
               SelectionArea(
                   child: Text('${translate('Version')}: $kUDeskVersion')
                       .marginSymmetric(vertical: 4.0)),
-              if (isWindows)
+              if (isWindows || isMacOS)
                 Obx(() {
                   final status = UdeskUpdate.status.value;
                   final downloading = UdeskUpdate.progress.value >= 0;

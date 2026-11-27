@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
@@ -9,10 +10,12 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 // UDesk update check. The website publishes version.json:
-//   {"version": "1.0.1", "windows": {"url": "...", "sha256": "...", "size": 123}}
+//   {"version": "1.0.1", "windows": {"url": "...", "sha256": "...", "size": 123},
+//    "macos": {"arm64": {"url": "...", "sha256": "...", "size": 123}, "x86_64": {...}}}
 // The installer is only run when it comes from our own download folder and its SHA-256
 // matches version.json. Running it shows the normal install page, which installs over
-// the current version.
+// the current version. On macOS the verified .dmg is opened in Finder and the user drags
+// the app to Applications.
 const _kVersionUrl = 'https://desk.unext.studio/version.json';
 const _kDownloadPrefix = 'https://desk.unext.studio/download/';
 
@@ -83,7 +86,10 @@ class UdeskUpdate {
 
   /// Fire and forget: a failed check must never disturb the app.
   static Future<void> check() async {
-    if (!Platform.isWindows || status.value == 'checking') return;
+    if (!(Platform.isWindows || Platform.isMacOS) ||
+        status.value == 'checking') {
+      return;
+    }
     status.value = 'checking';
     await _check();
     if (status.value == 'checking') status.value = 'error';
@@ -97,11 +103,19 @@ class UdeskUpdate {
       if (resp.statusCode != 200) return;
       final json = jsonDecode(utf8.decode(resp.bodyBytes));
       final version = '${json['version'] ?? ''}';
-      final url = '${json['windows']?['url'] ?? ''}';
-      final sha = '${json['windows']?['sha256'] ?? ''}'.toLowerCase();
+      final entry = Platform.isMacOS
+          ? (json['macos'] ??
+              {})[Abi.current() == Abi.macosArm64 ? 'arm64' : 'x86_64']
+          : json['windows'];
+      if (Platform.isMacOS && version.isNotEmpty && entry == null) {
+        status.value = 'latest';
+        return;
+      }
+      final url = '${entry?['url'] ?? ''}';
+      final sha = '${entry?['sha256'] ?? ''}'.toLowerCase();
       if (version.isEmpty ||
           !url.startsWith(_kDownloadPrefix) ||
-          !url.endsWith('install.exe') ||
+          !url.endsWith(Platform.isMacOS ? '.dmg' : 'install.exe') ||
           sha.length != 64) {
         return;
       }
@@ -124,9 +138,11 @@ class UdeskUpdate {
     progress.value = 0;
     final client = http.Client();
     try {
-      final dir = Directory('${Directory.systemTemp.path}\\udesk-update');
+      final sep = Platform.pathSeparator;
+      final dir = Directory('${Directory.systemTemp.path}${sep}udesk-update');
       await dir.create(recursive: true);
-      final file = File('${dir.path}\\UDesk-${latest.value}-install.exe');
+      final file = File(
+          '${dir.path}${sep}UDesk-${latest.value}${Platform.isMacOS ? '.dmg' : '-install.exe'}');
       final resp = await client.send(http.Request('GET', Uri.parse(_url)));
       if (resp.statusCode != 200) {
         throw 'HTTP ${resp.statusCode}';
@@ -144,6 +160,14 @@ class UdeskUpdate {
       if (digest.toString() != _sha256) {
         await file.delete();
         throw 'checksum mismatch';
+      }
+      if (Platform.isMacOS) {
+        final opened = await Process.run('open', [file.path]);
+        if (opened.exitCode != 0) throw 'open failed: ${opened.stderr}';
+        error.value = _thai
+            ? 'เปิดตัวติดตั้งแล้ว ออกจาก UDesk แล้วลาก UDesk ไปที่ Applications'
+            : 'Installer opened. Quit UDesk, then drag UDesk to Applications.';
+        return;
       }
       await Process.start(file.path, [], mode: ProcessStartMode.detached);
     } catch (e) {

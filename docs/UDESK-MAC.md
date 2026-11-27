@@ -1,7 +1,8 @@
 # UDesk บน macOS — เอกสารส่งต่อ
 
 เอกสารนี้เขียนให้คน (หรือแชท Claude) ที่จะ build และทำตัวติดตั้ง UDesk บน macOS อ่านแล้วเริ่มงานได้เลย
-สถานะ ณ 27 พ.ย. 2026: ฝั่ง Windows build และใช้งานได้แล้ว **ฝั่ง macOS ยังไม่เคย build**
+สถานะ ณ 27 พ.ย. 2026: ฝั่ง Windows build และใช้งานได้แล้ว ฝั่ง macOS build ได้ทั้ง Apple Silicon และ Intel
+ดูหัวข้อ "สถานะ macOS" ด้านล่าง
 
 ## UDesk คืออะไร
 
@@ -97,7 +98,49 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
 สีหลัก: น้ำเงินเข้ม `#071A4D`, น้ำเงิน `#0A3FBF` / `#0A74E8`, ส้ม `#F58A00`
 ภาพร่างดีไซน์ทุกหน้า: https://claude.ai/artifact/8z2k4dX4uptq7qUpqTZHEp (ต้องให้เจ้าของงานแชร์ก่อนจึงเปิดได้)
 
-## งานเฉพาะ macOS ที่ต้องทำ
+## สถานะ macOS (27 พ.ย. 2026)
+
+Build ด้วยคำสั่งเดียว (ทำ cargo, flutter, เซ็น และ `.dmg`):
+
+```sh
+UDESK_SIGN_IDENTITY="Developer ID Application: ..." UDESK_NOTARY_PROFILE=<profile> \
+  docs/udesk/build-mac.sh arm64     # หรือ x86_64
+```
+
+สิ่งที่ต่างจากที่เขียนไว้ด้านบน และบทเรียนจากการ build ครั้งแรก:
+
+- ใช้ Flutter **3.24.5** ทั้งสองสถาปัตยกรรม ใส่ patch ของ Flutter ตาม workflow (dropdown + `_setFramesEnabledState`)
+  workflow ของ upstream ใช้ Flutter 3.44.9 กับ arm64 เพื่อแก้ crash ตอนพิมพ์ด้วย IME
+  (rustdesk#16817) **ยังไม่ได้ทำและยังไม่ได้ทดสอบว่าเกิดกับภาษาไทยหรือไม่**
+- arm64 เปิด feature `screencapturekit` และตั้งขั้นต่ำ macOS 12.3 ผ่านตัวแปร environment
+  (`FLUTTER_XCODE_MACOSX_DEPLOYMENT_TARGET`) ไม่ได้แก้ไฟล์โปรเจกต์ x86_64 ขั้นต่ำ 10.14
+- NASM ต้องเป็น 2.16.x (ของ Homebrew เป็น 3.x ใช้ไม่ได้)
+- vcpkg: ffmpeg เป็น host dependency การ build x86_64 บนเครื่อง Apple Silicon ต้องใส่
+  `--triplet x64-osx --host-triplet x64-osx` และ**ใช้ `--x-install-root` คนละโฟลเดอร์กับ arm64**
+  ไม่เช่นนั้น vcpkg จะลบไลบรารีของอีกสถาปัตยกรรม จากนั้นทำ symlink `installed/x64-osx` ชี้ไปหา
+- แอปที่ build เสร็จเซ็นแบบ ad-hoc + hardened runtime ซึ่งเปิดไม่ขึ้น (Team ID ของ framework ไม่ตรง)
+  ต้องเซ็นใหม่ทั้ง bundle ด้วย `.github/scripts/sign-macos-app.sh` (สคริปต์ build ทำให้แล้ว)
+- `Release.entitlements` ปิด app sandbox อยู่แล้ว ไม่ต้องเพิ่ม `network.server` สำหรับ Google login
+- `create-dmg` จัดหน้าต่าง dmg ด้วยการสั่ง Finder ต้องอนุญาต Automation ไม่เช่นนั้นได้ dmg หน้าตาเริ่มต้น
+
+ทำแล้ว:
+
+- ชื่อแอป `UDesk.app`, bundle id **`studio.unext.desk`** (เจ้าของงานเลือก), URL scheme `udesk://`
+- ไอคอนแอป (`AppIcon.icns`, `res/mac-icon.png`) และ tray (`res/mac-tray-*.png`) ทำจาก `res/icon.png`
+- `doc_mac_permission` ชี้ไป `https://desk.unext.studio/mac.html` (ซอร์ส `udesk-web/mac.html`)
+- `correct_app_name()` ใน `src/platform/macos.rs`: โฟลเดอร์ config บน mac ตั้งชื่อตาม `ORG` (`com.udesk.UDesk`)
+  แต่สคริปต์ติดตั้ง service ยังอ้าง `com.carriez.*` จึงคัดลอก config ไปให้ root ไม่เจอ แก้ให้แทนด้วย `ORG`
+  **ยังไม่ได้ทดสอบการติดตั้ง service จริง** (ต้องใช้รหัสผ่านผู้ดูแล)
+- อัปเดตในโปรแกรม: `udesk_update.dart` อ่าน key `macos.arm64` / `macos.x86_64` จาก `version.json`
+  โหลด `.dmg` ตรวจ SHA-256 แล้วเปิดใน Finder ให้ผู้ใช้ลากไป Applications ปุ่ม "ตรวจหาอัปเดต" เปิดให้ mac แล้ว
+
+ชื่อ LaunchAgent/LaunchDaemon ยังเป็น `com.carriez.UDesk_server` / `_service` (ผู้ใช้เห็นได้ใน
+การตั้งค่า → รายการเข้าสู่ระบบ) ไม่ได้แก้เพราะอยู่ในโค้ดส่วนกลางหลายจุด
+
+**ระวังตอน deploy เว็บ:** `udesk-web/download/` ไม่อยู่ใน git และ `firebase deploy` แทนที่ทั้งไซต์
+เครื่องที่ deploy ต้องมีตัวติดตั้งครบทุกไฟล์ (ทั้ง `.exe` และ `.dmg`) ไม่เช่นนั้นไฟล์ของอีกฝั่งจะหายจากเว็บ
+
+## งานเฉพาะ macOS ที่ต้องทำ (รายการเดิม)
 
 1. **Build ให้ผ่านก่อน** โดยยังไม่แก้อะไร แล้วเปิดดูว่าชื่อ UDesk, ภาษาไทย, ฟอนต์, หน้าหลักแบบ C ขึ้นถูก
    และสถานะด้านล่างเป็น "พร้อม" (เชื่อม `rs.unext.studio` ได้)

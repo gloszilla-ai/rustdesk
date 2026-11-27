@@ -390,6 +390,11 @@ fn update_daemon_agent(agent_plist_file: String, update_source: UpdateSource) ->
 
 fn correct_app_name(s: &str) -> String {
     let mut s = s.to_owned();
+    // The config dir is named after ORG (see Config::path), not after com.carriez.
+    s = s.replace(
+        "Preferences/com.carriez.",
+        &format!("Preferences/{}.", hbb_common::config::ORG.read().unwrap()),
+    );
     if let Some(bundleid) = get_bundle_id() {
         s = s.replace("com.carriez.rustdesk", &bundleid);
     }
