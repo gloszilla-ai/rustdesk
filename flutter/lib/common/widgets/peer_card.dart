@@ -136,9 +136,12 @@ class _PeerCardState extends State<_PeerCard>
   }
 
   makeChild(bool isPortrait, Peer peer) {
-    final name = hideUsernameOnCard == true
-        ? peer.hostname
-        : '${peer.username}${peer.username.isNotEmpty && peer.hostname.isNotEmpty ? '@' : ''}${peer.hostname}';
+    // UDesk: prefer the name the user set (alias) as the device name.
+    final name = peer.alias.isNotEmpty
+        ? peer.alias
+        : (hideUsernameOnCard == true
+            ? peer.hostname
+            : '${peer.username}${peer.username.isNotEmpty && peer.hostname.isNotEmpty ? '@' : ''}${peer.hostname}');
     final greyStyle = TextStyle(
         fontSize: 11,
         color: Theme.of(context).textTheme.titleLarge?.color?.withOpacity(0.6));
@@ -190,7 +193,11 @@ class _PeerCardState extends State<_PeerCard>
                         getOnline(isPortrait ? 4 : 8, peer.online),
                         Expanded(
                             child: Text(
-                          peer.alias.isEmpty ? formatID(peer.id) : peer.alias,
+                          // UDesk: alias shows as the big name, so this row shows the ID
+                          // (and the hostname when an alias replaced it).
+                          peer.alias.isNotEmpty && peer.hostname.isNotEmpty
+                              ? '${formatID(peer.id)} · ${peer.hostname}'
+                              : formatID(peer.id),
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleSmall,
                         )),
@@ -286,9 +293,13 @@ class _PeerCardState extends State<_PeerCard>
       BuildContext context, Peer peer, Rx<BoxDecoration?> deco) {
     hideUsernameOnCard ??=
         bind.mainGetBuildinOption(key: kHideUsernameOnCard) == 'Y';
-    final name = hideUsernameOnCard == true
-        ? peer.hostname
-        : '${peer.username}${peer.username.isNotEmpty && peer.hostname.isNotEmpty ? '@' : ''}${peer.hostname}';
+    // UDesk: a name the user set (alias) is the device's real name, so show it as the
+    // big label; the hostname moves to the ID row below.
+    final name = peer.alias.isNotEmpty
+        ? peer.alias
+        : (hideUsernameOnCard == true
+            ? peer.hostname
+            : '${peer.username}${peer.username.isNotEmpty && peer.hostname.isNotEmpty ? '@' : ''}${peer.hostname}');
     final thumb = UdeskThumb.imageFor(peer.id);
     final child = Card(
       color: Colors.transparent,
@@ -387,7 +398,11 @@ class _PeerCardState extends State<_PeerCard>
                         getOnline(8, peer.online),
                         Expanded(
                             child: Text(
-                          peer.alias.isEmpty ? formatID(peer.id) : peer.alias,
+                          // UDesk: alias shows as the big name, so this row shows the ID
+                          // (and the hostname when an alias replaced it).
+                          peer.alias.isNotEmpty && peer.hostname.isNotEmpty
+                              ? '${formatID(peer.id)} · ${peer.hostname}'
+                              : formatID(peer.id),
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleSmall,
                         )),

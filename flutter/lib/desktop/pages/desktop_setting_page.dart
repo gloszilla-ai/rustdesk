@@ -2699,14 +2699,6 @@ class _AboutState extends State<_About> {
                 }),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://github.com/gloszilla-ai/rustdesk');
-                  },
-                  child: const Text(
-                    'Powered by RustDesk (AGPL-3.0)',
-                    style: linkStyle,
-                  ).marginSymmetric(vertical: 4.0)),
-              InkWell(
-                  onTap: () {
                     launchUrlString('https://desk.unext.studio');
                   },
                   child: Text(

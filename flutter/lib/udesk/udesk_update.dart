@@ -102,11 +102,14 @@ class UdeskUpdate {
           .timeout(const Duration(seconds: 10));
       if (resp.statusCode != 200) return;
       final json = jsonDecode(utf8.decode(resp.bodyBytes));
-      final version = '${json['version'] ?? ''}';
       final entry = Platform.isMacOS
           ? (json['macos'] ??
               {})[Abi.current() == Abi.macosArm64 ? 'arm64' : 'x86_64']
           : json['windows'];
+      // UDesk: prefer a per-platform version so Windows and macOS can ship separately;
+      // fall back to the shared top-level version when an entry has none.
+      final version =
+          '${(entry is Map ? entry['version'] : null) ?? json['version'] ?? ''}';
       if (Platform.isMacOS && version.isNotEmpty && entry == null) {
         status.value = 'latest';
         return;

@@ -1229,6 +1229,20 @@ class _CmControlPanel extends StatelessWidget {
   }
 }
 
+int _udeskRemoteClickToast = 0;
+// UDesk: this box only accepts clicks from the person at the device. When a click is
+// dropped because it coincides with one injected by the remote peer, say so instead of
+// going silent, so the operator does not think the button is broken.
+void _udeskNotifyLocalOnly() {
+  final now = DateTime.now().millisecondsSinceEpoch;
+  if (now - _udeskRemoteClickToast < 2000) return;
+  _udeskRemoteClickToast = now;
+  final lang = bind.mainGetLocalOption(key: 'lang');
+  showToast(lang.isEmpty || lang == 'th'
+      ? 'ปุ่มนี้กดได้ที่หน้าเครื่องปลายทางเท่านั้น'
+      : 'This button can only be used at the device itself');
+}
+
 void checkClickTime(int id, Function() callback) async {
   if (allowRemoteCMModification()) {
     callback();
@@ -1238,7 +1252,11 @@ void checkClickTime(int id, Function() callback) async {
   await bind.cmCheckClickTime(connId: id);
   Timer(const Duration(milliseconds: 120), () async {
     var d = clickCallbackTime - await bind.cmGetClickTime();
-    if (d > 120) callback();
+    if (d > 120) {
+      callback();
+    } else {
+      _udeskNotifyLocalOnly();
+    }
   });
 }
 
