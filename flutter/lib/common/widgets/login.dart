@@ -703,6 +703,11 @@ Future<bool?>? _activeLoginDialog;
 
 // call this directly
 Future<bool?> loginDialog() {
+  // UDesk signs in with Google only (Settings > Account); this dialog talks to an
+  // account server UDesk does not run.
+  if (bind.isCustomClient()) {
+    return Future.value(false);
+  }
   final activeDialog = _activeLoginDialog;
   if (activeDialog != null) {
     return activeDialog;

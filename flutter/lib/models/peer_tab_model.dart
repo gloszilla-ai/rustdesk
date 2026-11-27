@@ -41,8 +41,11 @@ class PeerTabModel with ChangeNotifier {
     true,
     true,
     !isWeb && bind.mainGetLocalOption(key: "disable-discovery-panel") != "Y",
-    !(bind.isDisableAb() || bind.isDisableAccount()),
-    !(bind.isDisableGroupPanel() || bind.isDisableAccount()),
+    // UDesk has no account server, so the address book and device group tabs are off.
+    !(bind.isCustomClient() || bind.isDisableAb() || bind.isDisableAccount()),
+    !(bind.isCustomClient() ||
+        bind.isDisableGroupPanel() ||
+        bind.isDisableAccount()),
   ]);
   final List<bool> _isVisible = List.filled(maxTabCount, true, growable: false);
   List<bool> get isVisibleEnabled => () {
