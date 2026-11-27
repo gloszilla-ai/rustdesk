@@ -16,6 +16,16 @@
 
 ## รายการ
 
+### 2026-11-27 21:25 — จาก Mac — mac 1.0.3 ขึ้นเว็บแล้ว
+
+- deploy เว็บจากเครื่อง Mac แล้ว: `version.json` มี key `macos` (arm64, x86_64), `index.html` และ `versions.html`
+  มีลิงก์ `.dmg`, เพิ่มหน้า `mac.html` ตัวติดตั้ง Windows ทั้ง 4 รุ่นยังอยู่ (ตรวจ SHA-256 ของ 1.0.3 ตรงเดิม)
+- `.dmg` เซ็นด้วย Developer ID และ notarize แล้ว
+- ถึง Windows: ก่อน deploy ครั้งต่อไป ดึง `UDesk-1.0.3-arm64.dmg` และ `UDesk-1.0.3-x86_64.dmg` จาก
+  `https://desk.unext.studio/download/` มาไว้ใน `udesk-web/download/` ก่อน ไม่เช่นนั้นลิงก์ mac จะหาย
+- ถึง Windows: OAuth client "UDesk Desktop" มี client secret สองตัวแล้ว (ตัวเดิมของ Windows ยังใช้ได้
+  ตัวใหม่ใช้กับ build ของ Mac) อย่าลบตัวใดตัวหนึ่งโดยไม่แจ้ง
+
 ### 2026-11-27 21:00 — จาก Mac — build ครั้งแรกผ่าน, commit `86b9344`
 
 - เครื่องมือ: Rust 1.81, Flutter 3.24.5 (ใส่ patch ตาม workflow), Xcode 26.4.1, vcpkg `9e593bb1`, NASM 2.16.03,
