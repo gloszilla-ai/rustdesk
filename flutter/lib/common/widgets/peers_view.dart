@@ -187,6 +187,9 @@ class _PeersViewState extends State<_PeersView>
       child: Consumer<Peers>(builder: (context, peers, child) {
         if (peers.peers.isEmpty) {
           gFFI.peerTabModel.setCurrentTabCachedPeers([]);
+          if (bind.isCustomClient()) {
+            return _udeskEmpty(context);
+          }
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -212,6 +215,40 @@ class _PeersViewState extends State<_PeersView>
           return _buildPeersView(peers);
         }
       }),
+    );
+  }
+
+  // UDesk: a neutral icon and a short plain message for an empty peer list.
+  Widget _udeskEmpty(BuildContext context) {
+    final lang = bind.mainGetLocalOption(key: 'lang');
+    final thai = lang.isEmpty || lang == 'th';
+    final event = widget.peers.loadEvent;
+    final IconData icon;
+    final String text;
+    if (event == LoadEvent.favorite) {
+      icon = Icons.star_outline_rounded;
+      text = thai ? 'ยังไม่มีรายการโปรด' : 'No favorites yet';
+    } else if (event == LoadEvent.lan) {
+      icon = Icons.lan_outlined;
+      text = thai
+          ? 'ยังไม่พบเครื่องในเครือข่ายนี้'
+          : 'No devices found on this network';
+    } else if (event == LoadEvent.addressBook) {
+      icon = Icons.contacts_outlined;
+      text = thai ? 'ยังไม่มีรายชื่อในสมุดรายชื่อ' : 'The address book is empty';
+    } else {
+      icon = Icons.history_rounded;
+      text = thai ? 'ยังไม่มีการเชื่อมต่อล่าสุด' : 'No recent sessions';
+    }
+    final color = Theme.of(context).tabBarTheme.labelColor?.withOpacity(0.6);
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 40).paddingOnly(bottom: 10),
+          Text(text, textAlign: TextAlign.center, style: TextStyle(color: color)),
+        ],
+      ),
     );
   }
 

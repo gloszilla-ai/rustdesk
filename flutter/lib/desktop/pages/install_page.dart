@@ -48,7 +48,7 @@ class _InstallPageState extends State<InstallPage> {
       child: Container(
         child: Scaffold(
             backgroundColor: Theme.of(context).colorScheme.background,
-            body: DesktopTab(controller: tabController)),
+            body: DesktopTab(controller: tabController, showTitle: true)),
       ),
     );
   }
@@ -75,7 +75,8 @@ class _InstallPageBodyState extends State<_InstallPageBody>
 
   // todo move to theme.
   final buttonStyle = OutlinedButton.styleFrom(
-    textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+    textStyle: TextStyle(
+        fontFamily: 'Anuphan', fontSize: 14, fontWeight: FontWeight.normal),
     padding: EdgeInsets.symmetric(vertical: 15, horizontal: 12),
   );
 

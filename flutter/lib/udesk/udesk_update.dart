@@ -1,0 +1,127 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_hbb/consts.dart';
+import 'package:flutter_hbb/models/platform_model.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+
+// UDesk update check. The website publishes version.json:
+//   {"version": "1.0.1", "windows": {"url": "...", "sha256": "...", "size": 123}}
+// The installer is only run when it comes from our own download folder and its SHA-256
+// matches version.json. Running it shows the normal install page, which installs over
+// the current version.
+const _kVersionUrl = 'https://desk.unext.studio/version.json';
+const _kDownloadPrefix = 'https://desk.unext.studio/download/';
+
+class UdeskUpdate {
+  /// Newer version available, empty when up to date or unknown.
+  static final latest = ''.obs;
+
+  /// -1 when idle, 0..1 while downloading.
+  static final progress = (-1.0).obs;
+  static final error = ''.obs;
+
+  static String _url = '';
+  static String _sha256 = '';
+
+  static bool get _thai {
+    final lang = bind.mainGetLocalOption(key: 'lang');
+    return lang.isEmpty || lang == 'th';
+  }
+
+  static String get message => error.value.isNotEmpty
+      ? error.value
+      : _thai
+          ? 'มี UDesk เวอร์ชันใหม่ ${latest.value} (เครื่องนี้ใช้ $kUDeskVersion)'
+          : 'UDesk ${latest.value} is available (this device has $kUDeskVersion)';
+
+  static String get buttonText {
+    final p = progress.value;
+    if (p >= 0) {
+      final pct = (p * 100).floor();
+      return _thai ? 'กำลังดาวน์โหลด $pct%' : 'Downloading $pct%';
+    }
+    return _thai ? 'อัปเดต' : 'Update';
+  }
+
+  static int compare(String a, String b) {
+    List<int> parts(String v) =>
+        v.split('.').map((e) => int.tryParse(e.trim()) ?? 0).toList();
+    final x = parts(a), y = parts(b);
+    for (var i = 0; i < 3; i++) {
+      final d = (i < x.length ? x[i] : 0) - (i < y.length ? y[i] : 0);
+      if (d != 0) return d;
+    }
+    return 0;
+  }
+
+  /// Fire and forget: a failed check must never disturb the app.
+  static Future<void> check() async {
+    if (!Platform.isWindows) return;
+    try {
+      final resp = await http
+          .get(Uri.parse(_kVersionUrl))
+          .timeout(const Duration(seconds: 10));
+      if (resp.statusCode != 200) return;
+      final json = jsonDecode(utf8.decode(resp.bodyBytes));
+      final version = '${json['version'] ?? ''}';
+      final url = '${json['windows']?['url'] ?? ''}';
+      final sha = '${json['windows']?['sha256'] ?? ''}'.toLowerCase();
+      if (version.isEmpty ||
+          !url.startsWith(_kDownloadPrefix) ||
+          !url.endsWith('install.exe') ||
+          sha.length != 64) {
+        return;
+      }
+      if (compare(version, kUDeskVersion) > 0) {
+        _url = url;
+        _sha256 = sha;
+        latest.value = version;
+      }
+    } catch (e) {
+      debugPrint('UDesk update: check failed: $e');
+    }
+  }
+
+  static Future<void> install() async {
+    if (progress.value >= 0 || _url.isEmpty) return;
+    error.value = '';
+    progress.value = 0;
+    final client = http.Client();
+    try {
+      final dir = Directory('${Directory.systemTemp.path}\\udesk-update');
+      await dir.create(recursive: true);
+      final file = File('${dir.path}\\UDesk-${latest.value}-install.exe');
+      final resp = await client.send(http.Request('GET', Uri.parse(_url)));
+      if (resp.statusCode != 200) {
+        throw 'HTTP ${resp.statusCode}';
+      }
+      final total = resp.contentLength ?? 0;
+      var done = 0;
+      final sink = file.openWrite();
+      await for (final chunk in resp.stream) {
+        sink.add(chunk);
+        done += chunk.length;
+        if (total > 0) progress.value = done / total;
+      }
+      await sink.close();
+      final digest = await sha256.bind(file.openRead()).first;
+      if (digest.toString() != _sha256) {
+        await file.delete();
+        throw 'checksum mismatch';
+      }
+      await Process.start(file.path, [], mode: ProcessStartMode.detached);
+    } catch (e) {
+      debugPrint('UDesk update: install failed: $e');
+      error.value = _thai
+          ? 'ดาวน์โหลดอัปเดตไม่สำเร็จ ลองใหม่อีกครั้ง'
+          : 'Update download failed. Please try again.';
+    } finally {
+      client.close();
+      progress.value = -1;
+    }
+  }
+}
