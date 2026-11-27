@@ -2616,8 +2616,12 @@ impl Connection {
     // public key. The signed message is (this connection's admin_challenge || this device id),
     // so a signature cannot be replayed to another machine or reused on a later connection.
     fn verify_admin_signature(&self) -> bool {
+        // No admin public key compiled in (a public build) -> never accept an admin signature.
+        let Some(pk_b64) = base::UDESK_ADMIN_PUB_KEY else {
+            return false;
+        };
         udesk_verify_admin_sig(
-            base::UDESK_ADMIN_PUB_KEY,
+            pk_b64,
             &self.hash.admin_challenge,
             &Config::get_id(),
             &self.lr.admin_signature,
