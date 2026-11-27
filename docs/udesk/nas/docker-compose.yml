@@ -1,0 +1,22 @@
+# UDesk server (RustDesk hbbs + hbbr) for Synology Container Manager.
+# Ports used on the host: TCP 21115-21119, UDP 21116. Keys and database live in ./data.
+services:
+  hbbs:
+    container_name: udesk-hbbs
+    image: rustdesk/rustdesk-server:latest
+    command: hbbs
+    volumes:
+      - ./data:/root
+    network_mode: host
+    depends_on:
+      - hbbr
+    restart: unless-stopped
+
+  hbbr:
+    container_name: udesk-hbbr
+    image: rustdesk/rustdesk-server:latest
+    command: hbbr
+    volumes:
+      - ./data:/root
+    network_mode: host
+    restart: unless-stopped
