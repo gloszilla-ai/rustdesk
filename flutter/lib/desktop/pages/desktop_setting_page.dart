@@ -2617,6 +2617,14 @@ class _AboutState extends State<_About> {
                       .marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
+                    launchUrlString('https://github.com/gloszilla-ai/rustdesk');
+                  },
+                  child: const Text(
+                    'UDesk is based on RustDesk (AGPL-3.0). Source code',
+                    style: linkStyle,
+                  ).marginSymmetric(vertical: 4.0)),
+              InkWell(
+                  onTap: () {
                     launchUrlString('https://rustdesk.com/privacy.html');
                   },
                   child: Text(
