@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hbb/udesk/udesk_log.dart';
 import 'package:flutter_hbb/udesk/udesk_update.dart';
 import 'package:flutter_hbb/udesk/udesk_thumb.dart';
+import 'package:flutter_hbb/udesk/udesk_session.dart';
 import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/common/widgets/animated_rotation_widget.dart';
 import 'package:flutter_hbb/common/widgets/custom_password.dart';
@@ -169,7 +170,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                   Row(children: [
                     ValueListenableBuilder<TextEditingValue>(
                       valueListenable: model.serverPasswd,
-                      builder: (_, v, __) => Text(v.text,
+                      builder: (_, v, __) => Text(
+                          model.connectStatus == -1 && UdeskSession.detached
+                              ? '—'
+                              : v.text,
                           style: const TextStyle(
                               fontSize: 20,
                               height: 1.6,

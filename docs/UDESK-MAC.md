@@ -17,7 +17,7 @@ UDesk คือ fork ของ [RustDesk](https://github.com/rustdesk/rustdesk) 
 | เว็บไซต์ | `https://desk.unext.studio` — Firebase Hosting site `unext-desk` ใน project `utc-next` (ซอร์สใน `udesk-web/`) |
 | Public key ของเซิร์ฟเวอร์ | ฝังอยู่ใน `libs/hbb_common/src/config.rs` (`RS_PUB_KEY`) |
 | ชื่อแอป / org | `UDesk` / `com.udesk` (`APP_NAME`, `ORG` ใน `config.rs`) |
-| เวอร์ชันที่ผู้ใช้เห็น | `1.0.2` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
+| เวอร์ชันที่ผู้ใช้เห็น | `1.0.3` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
 
 เลขเวอร์ชันของ crate ยังเป็น `1.5.3` โดยตั้งใจ เพราะเครื่องสองฝั่งใช้เลขนี้เทียบกันว่าจะเปิดฟีเจอร์ไหน **อย่าเปลี่ยน**
 
@@ -84,6 +84,9 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
   ย่อเหลือกว้าง 480px เก็บในเครื่องเท่านั้น (Windows: `%APPDATA%\UDesk\thumbs`, ระบบอื่น: application support)
   ปิดได้ในตั้งค่า → ทั่วไป **ห้ามส่งภาพนี้ออกนอกเครื่อง**
 - **หน้าโอนไฟล์:** หัวสองฝั่งแสดงชื่อเครื่อง — `desktop/pages/file_manager_page.dart`
+- **กันใส่ ID ของตัวเอง:** `connect()` ใน `flutter/lib/common.dart` ขึ้นข้อความแทนการเชื่อมต่อ
+- **สถานะ Remote Desktop (เฉพาะ Windows):** `flutter/lib/udesk/udesk_session.dart` ไม่มีผลบน macOS
+- **ปุ่ม "ตรวจหาอัปเดต":** หน้า ตั้งค่า → เกี่ยวกับ แสดงเฉพาะ Windows (`if (isWindows)`) ต้องเปิดให้ mac เมื่อทำทางอัปเดตของ mac เสร็จ
 - **อัปเดตในโปรแกรม:** `flutter/lib/udesk/udesk_update.dart` อ่าน `https://desk.unext.studio/version.json`
   ตอนนี้ทำเฉพาะ Windows (`if (!Platform.isWindows) return;`) ฝั่ง mac ต้องเพิ่ม key `macos` ใน `udesk-web/version.json`
   และทางติดตั้ง `.dmg` เอง
@@ -110,7 +113,7 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
    และใช้ปุ่มไฟจราจรของระบบ ตรวจว่าแถบน้ำเงินเข้มเข้ากับปุ่มของระบบ
 5. **Google login:** flow ใช้เบราว์เซอร์ + loopback `http://127.0.0.1:<port>` ควรทำงานบน macOS ได้เลย
    **จุดเสี่ยง:** `flutter/macos/Runner/Release.entitlements` เปิด app sandbox และมีแค่ `com.apple.security.network.client` การฟังพอร์ต loopback อาจถูกบล็อก ถ้า login ค้างที่ "กำลังรอการยืนยันในเบราว์เซอร์" ให้เพิ่ม `com.apple.security.network.server`
-6. **ตัวติดตั้ง:** ทำ `.dmg` (upstream ใช้ `create-dmg` ใน workflow) ชื่อไฟล์ `UDesk-<เวอร์ชัน>-<arch>.dmg` (ตอนนี้ 1.0.2)
+6. **ตัวติดตั้ง:** ทำ `.dmg` (upstream ใช้ `create-dmg` ใน workflow) ชื่อไฟล์ `UDesk-<เวอร์ชัน>-<arch>.dmg` (ตอนนี้ 1.0.3)
    ทั้ง Apple Silicon และ Intel ถ้าทำได้
 7. **Code signing / notarization:** ต้องใช้ Apple Developer ID ของเจ้าของงาน ถ้ายังไม่มีให้แจ้งว่า
    ผู้ใช้จะเจอคำเตือน Gatekeeper และต้องคลิกขวา → Open

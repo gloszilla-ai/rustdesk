@@ -2614,6 +2614,16 @@ connect(BuildContext context, String id,
     bool? isSharedPassword,
     String loginMethod = ''}) async {
   if (id == '') return;
+  // UDesk: connecting to this device's own ID only ends in a confusing password error.
+  if (isDesktop &&
+      id.replaceAll(' ', '') ==
+          gFFI.serverModel.serverId.text.replaceAll(' ', '')) {
+    final lang = bind.mainGetLocalOption(key: 'lang');
+    showToast(lang.isEmpty || lang == 'th'
+        ? 'นี่คือ ID ของเครื่องนี้เอง ให้ใส่ ID ของเครื่องที่ต้องการรีโมท'
+        : 'This is the ID of this device. Enter the ID of the device to control.');
+    return;
+  }
   UdeskLog.event('connect_out',
       peer: id.replaceAll(' ', ''),
       kind: isFileTransfer ? 'file' : (isTerminal ? 'terminal' : 'screen'));
