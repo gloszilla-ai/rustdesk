@@ -6,6 +6,7 @@ import 'package:flutter_hbb/common/widgets/dialog.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/models/peer_tab_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
+import 'package:flutter_hbb/udesk/udesk_thumb.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -288,6 +289,7 @@ class _PeerCardState extends State<_PeerCard>
     final name = hideUsernameOnCard == true
         ? peer.hostname
         : '${peer.username}${peer.username.isNotEmpty && peer.hostname.isNotEmpty ? '@' : ''}${peer.hostname}';
+    final thumb = UdeskThumb.imageFor(peer.id);
     final child = Card(
       color: Colors.transparent,
       elevation: 0,
@@ -306,18 +308,32 @@ class _PeerCardState extends State<_PeerCard>
               children: [
                 Expanded(
                   child: Container(
-                    color: str2color('${peer.id}${peer.platform}', 0x7f),
+                    decoration: BoxDecoration(
+                      color: str2color('${peer.id}${peer.platform}', 0x7f),
+                      image: thumb == null
+                          ? null
+                          : DecorationImage(
+                              image: thumb,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
+                              colorFilter: const ColorFilter.mode(
+                                  Colors.black26, BlendMode.darken)),
+                    ),
                     child: Row(
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: thumb == null
+                                ? MainAxisAlignment.start
+                                : MainAxisAlignment.end,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                child:
-                                    getPlatformImage(peer.platform, size: 60),
-                              ),
+                              if (thumb == null)
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  child: getPlatformImage(peer.platform,
+                                      size: 60),
+                                ),
                               Row(
                                 children: [
                                   Expanded(
@@ -913,6 +929,7 @@ abstract class BasePeerCard extends StatelessWidget {
           switch (tab) {
             case PeerTabIndex.recent:
               await bind.mainRemovePeer(id: id);
+              await UdeskThumb.remove(id);
               bind.mainLoadRecentPeers();
               break;
             case PeerTabIndex.fav:

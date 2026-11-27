@@ -1,8 +1,8 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "windows": {
-    "url": "https://desk.unext.studio/download/UDesk-1.0.0-install.exe",
-    "sha256": "9c0ebc29476ec19f9309d3e185673c16e05bfff8faaad004d151c89896610baf",
-    "size": 25800704
+    "url": "https://desk.unext.studio/download/UDesk-1.0.1-install.exe",
+    "sha256": "64e0ba169bb57b07782fcbec61769c2424c60550d3fe08acc2c252c799e6ca12",
+    "size": 25814528
   }
 }

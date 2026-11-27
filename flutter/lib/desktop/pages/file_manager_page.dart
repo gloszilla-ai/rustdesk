@@ -584,10 +584,19 @@ class _FileManagerViewState extends State<FileManagerView> {
                                   );
                                 }
                               })),
-                      Text(isLocal
-                              ? translate("Local Computer")
-                              : translate("Remote Computer"))
-                          .marginOnly(left: 8.0)
+                      // UDesk: show the device name of each side.
+                      Obx(() {
+                        _ffi.ffiModel.pi.isSet.value;
+                        final remote = _ffi.ffiModel.pi.hostname;
+                        final name = isLocal
+                            ? Platform.localHostname
+                            : (remote.isNotEmpty ? remote : _ffi.id);
+                        return Text(name.isNotEmpty
+                            ? name
+                            : translate(isLocal
+                                ? "Local Computer"
+                                : "Remote Computer"));
+                      }).marginOnly(left: 8.0)
                     ],
                   ),
                   preferredSize: Size(double.infinity, 70))

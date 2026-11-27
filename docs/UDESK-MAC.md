@@ -17,7 +17,7 @@ UDesk คือ fork ของ [RustDesk](https://github.com/rustdesk/rustdesk) 
 | เว็บไซต์ | `https://desk.unext.studio` — Firebase Hosting site `unext-desk` ใน project `utc-next` (ซอร์สใน `udesk-web/`) |
 | Public key ของเซิร์ฟเวอร์ | ฝังอยู่ใน `libs/hbb_common/src/config.rs` (`RS_PUB_KEY`) |
 | ชื่อแอป / org | `UDesk` / `com.udesk` (`APP_NAME`, `ORG` ใน `config.rs`) |
-| เวอร์ชันที่ผู้ใช้เห็น | `1.0.0` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
+| เวอร์ชันที่ผู้ใช้เห็น | `1.0.1` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
 
 เลขเวอร์ชันของ crate ยังเป็น `1.5.3` โดยตั้งใจ เพราะเครื่องสองฝั่งใช้เลขนี้เทียบกันว่าจะเปิดฟีเจอร์ไหน **อย่าเปลี่ยน**
 
@@ -67,7 +67,8 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
 ## สิ่งที่แก้จาก upstream แล้ว (ใช้ร่วมกันทุกระบบ)
 
 - **แบรนด์:** ชื่อ, ไอคอน (`res/`, `flutter/assets/icon.svg`), ตัดลิงก์ไป rustdesk.com ออกจากหน้าหลัก/About/Install
-  หน้า About เหลือบรรทัด `Powered by RustDesk (AGPL-3.0)` ลิงก์ไปซอร์สของเรา **อย่าลบบรรทัดนี้**
+  หน้า About เหลือแค่เวอร์ชัน, บรรทัด `Powered by RustDesk (AGPL-3.0)` ลิงก์ไปซอร์สของเรา และเว็บไซต์
+  (เจ้าของงานสั่งเอาวันที่ build, ลายนิ้วมือ, ID ออก) **อย่าลบบรรทัด Powered by**
 - **ภาษา:** ค่าเริ่มต้นเป็นไทย (`src/lang.rs`), ฟอนต์ Anuphan ฝังใน `flutter/assets/fonts/`
 - **หน้าหลัก (ดีไซน์ "C"):** แถบหัวน้ำเงินไล่สีแสดง ID/รหัสผ่าน, แถบแจ้งเตือนสีส้ม, ช่องเชื่อมต่อเต็มความกว้าง,
   แท็บมีข้อความ, แถบชื่อหน้าต่างน้ำเงินเข้ม — `flutter/lib/desktop/pages/desktop_home_page.dart`,
@@ -76,6 +77,19 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
 - **Login:** Google sign-in ผ่าน Firebase (project `utc-next`) — `flutter/lib/udesk/udesk_auth.dart`
 - **บันทึกการใช้งาน:** ส่ง event เข้า Firestore database `udesk` — `flutter/lib/udesk/udesk_log.dart`
   (เก็บเฉพาะ ID เครื่อง, ID ปลายทาง, เวลา, ประเภท ห้ามเพิ่มรหัสผ่าน/ภาพหน้าจอ/การกดแป้น/เนื้อหาไฟล์)
+- **Login เหลือ Google ทางเดียว:** `loginDialog()` ใน `common/widgets/login.dart` ถูกปิดสำหรับ custom client
+  และแท็บ "สมุดรายชื่อ" / "อุปกรณ์ที่เข้าถึงได้" ถูกซ่อนใน `models/peer_tab_model.dart` (เราไม่มีเซิร์ฟเวอร์บัญชี)
+- **หน้าว่างของรายการเครื่อง:** ไอคอนกลาง ๆ และข้อความสั้น — `_udeskEmpty` ใน `common/widgets/peers_view.dart`
+- **ภาพเดสก์ท็อปบนการ์ดเครื่อง:** `flutter/lib/udesk/udesk_thumb.dart` ขอ screenshot หนึ่งครั้งหลังเริ่มรีโมท 4 วินาที
+  ย่อเหลือกว้าง 480px เก็บในเครื่องเท่านั้น (Windows: `%APPDATA%\UDesk\thumbs`, ระบบอื่น: application support)
+  ปิดได้ในตั้งค่า → ทั่วไป **ห้ามส่งภาพนี้ออกนอกเครื่อง**
+- **หน้าโอนไฟล์:** หัวสองฝั่งแสดงชื่อเครื่อง — `desktop/pages/file_manager_page.dart`
+- **อัปเดตในโปรแกรม:** `flutter/lib/udesk/udesk_update.dart` อ่าน `https://desk.unext.studio/version.json`
+  ตอนนี้ทำเฉพาะ Windows (`if (!Platform.isWindows) return;`) ฝั่ง mac ต้องเพิ่ม key `macos` ใน `udesk-web/version.json`
+  และทางติดตั้ง `.dmg` เอง
+- **ทุกครั้งที่ออกรุ่น:** แก้ `kUDeskVersion`, วางตัวติดตั้งใน `udesk-web/download/` (ไม่ commit), แก้ `version.json`
+  (url, sha256, size), เพิ่มในหน้า `udesk-web/versions.html` แล้ว `firebase deploy --only hosting:unext-desk --project utc-next`
+- รายการที่ยังค้าง: `docs/udesk/udesk-known-issues.md`
 
 สีหลัก: น้ำเงินเข้ม `#071A4D`, น้ำเงิน `#0A3FBF` / `#0A74E8`, ส้ม `#F58A00`
 ภาพร่างดีไซน์ทุกหน้า: https://claude.ai/artifact/8z2k4dX4uptq7qUpqTZHEp (ต้องให้เจ้าของงานแชร์ก่อนจึงเปิดได้)
@@ -96,7 +110,7 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
    และใช้ปุ่มไฟจราจรของระบบ ตรวจว่าแถบน้ำเงินเข้มเข้ากับปุ่มของระบบ
 5. **Google login:** flow ใช้เบราว์เซอร์ + loopback `http://127.0.0.1:<port>` ควรทำงานบน macOS ได้เลย
    **จุดเสี่ยง:** `flutter/macos/Runner/Release.entitlements` เปิด app sandbox และมีแค่ `com.apple.security.network.client` การฟังพอร์ต loopback อาจถูกบล็อก ถ้า login ค้างที่ "กำลังรอการยืนยันในเบราว์เซอร์" ให้เพิ่ม `com.apple.security.network.server`
-6. **ตัวติดตั้ง:** ทำ `.dmg` (upstream ใช้ `create-dmg` ใน workflow) ชื่อไฟล์ `UDesk-1.0.0-<arch>.dmg`
+6. **ตัวติดตั้ง:** ทำ `.dmg` (upstream ใช้ `create-dmg` ใน workflow) ชื่อไฟล์ `UDesk-<เวอร์ชัน>-<arch>.dmg` (ตอนนี้ 1.0.1)
    ทั้ง Apple Silicon และ Intel ถ้าทำได้
 7. **Code signing / notarization:** ต้องใช้ Apple Developer ID ของเจ้าของงาน ถ้ายังไม่มีให้แจ้งว่า
    ผู้ใช้จะเจอคำเตือน Gatekeeper และต้องคลิกขวา → Open

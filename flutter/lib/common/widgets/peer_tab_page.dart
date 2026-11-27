@@ -17,6 +17,7 @@ import 'package:flutter_hbb/models/peer_model.dart';
 
 import 'package:flutter_hbb/models/peer_tab_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
+import 'package:flutter_hbb/udesk/udesk_thumb.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -415,6 +416,7 @@ class _PeerTabPageState extends State<PeerTabPage>
               case 0:
                 for (var p in peers) {
                   await bind.mainRemovePeer(id: p.id);
+                  await UdeskThumb.remove(p.id);
                 }
                 bind.mainLoadRecentPeers();
                 break;

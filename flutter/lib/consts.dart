@@ -45,7 +45,7 @@ const double kScrollbarThickness = 12.0;
 /// [kAppTypeMain] used by 'Desktop Main Page' , 'Mobile (Client and Server)', "Install Page"
 // UDesk's own release number, shown to users. The crate version stays at the upstream
 // RustDesk version because peers compare it to decide which protocol features to use.
-const String kUDeskVersion = "1.0.0";
+const String kUDeskVersion = "1.0.1";
 
 const String kAppTypeMain = "main";
 

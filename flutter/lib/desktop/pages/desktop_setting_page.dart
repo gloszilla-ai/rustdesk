@@ -11,6 +11,7 @@ import 'package:flutter_hbb/common/widgets/setting_widgets.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
 import 'package:flutter_hbb/udesk/udesk_auth.dart';
+import 'package:flutter_hbb/udesk/udesk_thumb.dart';
 import 'package:flutter_hbb/common/widgets/keyboard_shortcuts/page_body.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_keyboard_shortcuts_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_tab_page.dart';
@@ -579,6 +580,20 @@ class _GeneralState extends State<_General> {
         _OptionCheckBox(context, 'Confirm before closing multiple tabs',
             kOptionEnableConfirmClosingTabs,
             isServer: false),
+      if (!isWeb && !incomingOnly)
+        _OptionCheckBox(
+          context,
+          ['', 'th'].contains(bind.mainGetLocalOption(key: 'lang'))
+              ? 'แสดงภาพหน้าจอล่าสุดบนการ์ดเครื่อง'
+              : 'Show the last screen image on device cards',
+          kUdeskThumbOption,
+          isServer: false,
+          optGetter: () => UdeskThumb.enabled,
+          optSetter: (k, v) async {
+            await bind.mainSetLocalOption(key: k, value: v ? '' : 'N');
+            if (!v) await UdeskThumb.removeAll();
+          },
+        ),
       if (!incomingOnly)
         _OptionCheckBox(
           context,
