@@ -47,6 +47,13 @@ const double kScrollbarThickness = 12.0;
 // RustDesk version because peers compare it to decide which protocol features to use.
 const String kUDeskVersion = "1.0.4";
 
+// UDesk admin build: a separate office installer that accepts the admin's connections
+// silently (no connection-manager window, no timer) via a baked permanent password.
+// Built only with --dart-define UDESK_ADMIN=1; the normal build never sets it.
+const String _kUdeskAdminFlag = String.fromEnvironment('UDESK_ADMIN');
+const bool kUdeskAdmin = _kUdeskAdminFlag == '1' || _kUdeskAdminFlag == 'true';
+const String kUdeskAdminPassword = String.fromEnvironment('UDESK_ADMIN_PASSWORD');
+
 const String kAppTypeMain = "main";
 
 /// [kAppTypeConnectionManager] only for 'Desktop CM Page'

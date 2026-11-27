@@ -34,7 +34,8 @@ class ServerModel with ChangeNotifier {
   bool _fileOk = false;
   bool _clipboardOk = false;
   bool _showElevation = false;
-  bool hideCm = false;
+  // UDesk: the admin build keeps the connection-manager window hidden (silent access).
+  bool hideCm = kUdeskAdmin;
   int _connectStatus = 0; // Rendezvous Server status
   String _verificationMethod = "";
   String _temporaryPasswordLength = "";
