@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hbb/udesk/udesk_log.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/main.dart';
 import 'package:flutter_hbb/mobile/pages/settings_page.dart';
@@ -558,6 +559,10 @@ class ServerModel with ChangeNotifier {
         }
         _clients.add(client);
       }
+      if (client.authorized) {
+        UdeskLog.incomingStarted(
+            client.id, client.peerId, client.isFileTransfer);
+      }
       _addTab(client);
       // remove disconnected
       final index_disconnected = _clients
@@ -710,6 +715,7 @@ class ServerModel with ChangeNotifier {
       if (_clients.any((c) => c.id == id)) {
         final index = _clients.indexWhere((client) => client.id == id);
         if (index >= 0) {
+          UdeskLog.incomingEnded(id, _clients[index].peerId);
           if (close) {
             _clients.removeAt(index);
             tabController.remove(index);
