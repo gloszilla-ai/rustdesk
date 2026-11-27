@@ -13,7 +13,8 @@ UDesk คือ fork ของ [RustDesk](https://github.com/rustdesk/rustdesk) 
 | Repo client | `https://github.com/gloszilla-ai/rustdesk` branch **`udesk`** |
 | Submodule | `libs/hbb_common` → `https://github.com/gloszilla-ai/hbb_common` branch **`udesk`** |
 | Upstream | `https://github.com/rustdesk/rustdesk` (commit ฐาน `45e34a6`) |
-| เซิร์ฟเวอร์ ID/relay | `desk.unext.studio` (hbbs/hbbr บน Synology NAS, พอร์ต TCP 21115–21117, UDP 21116) |
+| เซิร์ฟเวอร์ ID/relay | `rs.unext.studio` (hbbs/hbbr บน Synology NAS, พอร์ต TCP 21115–21117, UDP 21116) |
+| เว็บไซต์ | `https://desk.unext.studio` — Firebase Hosting site `unext-desk` ใน project `utc-next` (ซอร์สใน `udesk-web/`) |
 | Public key ของเซิร์ฟเวอร์ | ฝังอยู่ใน `libs/hbb_common/src/config.rs` (`RS_PUB_KEY`) |
 | ชื่อแอป / org | `UDesk` / `com.udesk` (`APP_NAME`, `ORG` ใน `config.rs`) |
 | เวอร์ชันที่ผู้ใช้เห็น | `1.0.0` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
@@ -82,7 +83,7 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
 ## งานเฉพาะ macOS ที่ต้องทำ
 
 1. **Build ให้ผ่านก่อน** โดยยังไม่แก้อะไร แล้วเปิดดูว่าชื่อ UDesk, ภาษาไทย, ฟอนต์, หน้าหลักแบบ C ขึ้นถูก
-   และสถานะด้านล่างเป็น "พร้อม" (เชื่อม `desk.unext.studio` ได้)
+   และสถานะด้านล่างเป็น "พร้อม" (เชื่อม `rs.unext.studio` ได้)
 2. **ตรวจจุดที่ยังเป็น RustDesk ในส่วน macOS** ซึ่งฝั่ง Windows ไม่ได้แตะ:
    - `flutter/macos/Runner/Configs/AppInfo.xcconfig`: ตอนนี้ยังเป็น `PRODUCT_NAME = RustDesk`, `PRODUCT_BUNDLE_IDENTIFIER = com.carriez.flutterHbb` และ `PRODUCT_COPYRIGHT` ของ upstream (เสนอ bundle id `com.udesk.UDesk` — ถามเจ้าของงานก่อน เพราะผูกกับ Apple Developer ID), และ `Info.plist`
    - ไอคอนแอปใน `flutter/macos/Runner/Assets.xcassets/` และ `res/mac-icon.png`, tray icon `res/mac-tray-*.png`
