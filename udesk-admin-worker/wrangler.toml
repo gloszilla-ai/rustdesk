@@ -4,9 +4,9 @@ compatibility_date = "2024-11-01"
 
 [vars]
 FIREBASE_PROJECT = "utc-next"
-ADMIN_UID = "PUT_ADMIN_FIREBASE_UID_HERE"
 # A from-address on a domain onboarded to Cloudflare Email Sending (unext.studio is onboarded).
 SENDER_EMAIL = "UDesk <udesk@unext.studio>"
+# ADMIN_UID is set as a secret (wrangler secret put ADMIN_UID) so it is not in the public repo.
 
 # Cloudflare Email Sending binding (no third-party provider).
 [[send_email]]
