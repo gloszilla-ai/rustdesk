@@ -60,3 +60,6 @@ flutter/web/
 /third_party/libdrmtap/
 # Local git worktrees
 .worktrees/
+
+# UDesk: installers are deployed to hosting, not committed
+udesk-web/download/
