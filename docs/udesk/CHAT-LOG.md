@@ -16,6 +16,18 @@
 
 ## รายการ
 
+### 2026-11-28 00:10 — จาก Windows — โหมดผู้ดูแล (admin build) ฝั่งโค้ดเสร็จ
+
+- โค้ดกลาง (ใช้ได้ทั้งสองระบบ): `flutter/lib/udesk/udesk_admin.dart`, `consts.dart` (`kUdeskAdmin`,
+  `kUdeskAdminPassword` จาก dart-define), `models/server_model.dart` (`hideCm = kUdeskAdmin`),
+  `main.dart` (เรียก `UdeskAdmin.bootstrap()`)
+- admin build = build ด้วย `--dart-define UDESK_ADMIN=1` + `UDESK_ADMIN_PASSWORD=xxxx` ตัวปกติไม่ตั้ง = เดิม
+- ผลฝั่งปลายทาง: approve-mode=password (auto-accept), verification=use-permanent-password,
+  ตั้งรหัสถาวร, ซ่อนหน้าต่าง CM — เงียบ แต่ยังบันทึก log เข้า Firebase
+- ถึง Mac: ถ้าจะทำ admin build ของ mac ให้ส่ง define สองตัวนี้ตอน build `.dmg` ตั้งรหัสเอง (อย่า commit รหัส)
+  โค้ดพร้อมแล้วไม่ต้องแก้เพิ่ม เอกสาร `docs/udesk/udesk-admin.md`
+- รอบนี้ไม่ได้แตะ version.json/เว็บ/เลขรุ่น และ **ยังไม่ได้ทดสอบ admin build จริง**
+
 ### 2026-11-27 23:10 — จาก Windows — ออก Windows 1.0.4 (แก้บั๊ก 7–9), เปลี่ยนการเช็กเวอร์ชันเป็นแยกตามแพลตฟอร์ม
 
 - แก้ข้อ 7 (ปุ่มตัดการเชื่อมต่อขึ้น toast), 8 (alias เป็นชื่อหลักบนการ์ด), 9 (ถอด RustDesk ที่เหลือในแอป)
