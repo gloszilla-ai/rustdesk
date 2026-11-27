@@ -9,6 +9,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/udesk/udesk_log.dart';
+import 'package:flutter_hbb/udesk/udesk_admin_2fa.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
 import 'package:flutter_hbb/desktop/widgets/refresh_wrapper.dart';
 import 'package:flutter_hbb/desktop/widgets/tabbar_widget.dart';
@@ -2623,6 +2624,11 @@ connect(BuildContext context, String id,
         ? 'นี่คือ ID ของเครื่องนี้เอง ให้ใส่ ID ของเครื่องที่ต้องการรีโมท'
         : 'This is the ID of this device. Enter the ID of the device to control.');
     return;
+  }
+  // UDesk super-admin tool: unlock the admin key via 2FA before connecting, so the connection
+  // is signed and accepted silently. Declining falls back to a normal (unsigned) connection.
+  if (kUdeskAdminTool && !UdeskAdmin2FA.unlocked.value) {
+    await UdeskAdmin2FA.ensureUnlocked(context);
   }
   UdeskLog.event('connect_out',
       peer: id.replaceAll(' ', ''),

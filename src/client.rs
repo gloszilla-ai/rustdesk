@@ -165,6 +165,19 @@ lazy_static::lazy_static! {
     static ref AUDIO_HOST: Host = cpal::default_host();
 }
 
+lazy_static::lazy_static! {
+    // UDesk super-admin: the admin private key (sodium 64-byte secret, base64) lives only in
+    // memory and only after 2FA. The admin tool fetches it from the OTP worker and sets it via
+    // main_set_common("udesk-admin-key", ...). It is never baked into the binary or written to
+    // disk; clearing it (empty) disables signing.
+    static ref UDESK_ADMIN_RUNTIME_KEY: std::sync::RwLock<String> = Default::default();
+}
+
+// UDesk: called from the ffi dispatch when Dart sets the admin key after 2FA.
+pub fn set_udesk_admin_key(v: String) {
+    *UDESK_ADMIN_RUNTIME_KEY.write().unwrap() = v;
+}
+
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 lazy_static::lazy_static! {
     static ref ENIGO: Arc<Mutex<enigo::Enigo>> = Arc::new(Mutex::new(enigo::Enigo::new()));
@@ -3903,18 +3916,18 @@ impl LoginConfigHandler {
         msg_out
     }
 
-    // UDesk super-admin: sign (challenge || target id) with the admin private key, but only in
-    // the admin tool build, which bakes UDESK_ADMIN_KEY (sodium 64-byte secret, base64) at Rust
-    // build time. Normal/office builds set no such env, so this is always None and they never
-    // sign — they only carry the public key to verify. The signed id binds the signature to the
-    // intended machine, so a relay cannot redirect it to a different peer.
+    // UDesk super-admin: sign (challenge || target id) with the admin private key, which is held
+    // in memory only after the admin passes 2FA (Google login + email OTP) and the OTP worker
+    // releases it. With no key set this is None, so normal/office builds — and the admin tool
+    // before 2FA — never sign; they only carry the public key to verify. The signed id binds the
+    // signature to the intended machine, so a relay cannot redirect it to a different peer.
     fn udesk_admin_sign(&self) -> Option<Vec<u8>> {
         use hbb_common::sodiumoxide::crypto::sign;
-        let key_b64 = option_env!("UDESK_ADMIN_KEY")?;
+        let key_b64 = UDESK_ADMIN_RUNTIME_KEY.read().unwrap().clone();
         if key_b64.is_empty() || self.hash.admin_challenge.is_empty() {
             return None;
         }
-        let sk_bytes = crate::decode64(key_b64).ok()?;
+        let sk_bytes = crate::decode64(&key_b64).ok()?;
         let sk = sign::SecretKey::from_slice(&sk_bytes)?;
         let mut msg = self.hash.admin_challenge.to_vec();
         msg.extend_from_slice(self.id.as_bytes());

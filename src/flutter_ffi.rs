@@ -2869,6 +2869,11 @@ fn verified_update_artifact_for_release_page_url(
 }
 
 pub fn main_set_common(_key: String, _value: String) {
+    // UDesk super-admin: receive the admin private key after 2FA. Kept in memory only.
+    if _key == "udesk-admin-key" {
+        crate::client::set_udesk_admin_key(_value);
+        return;
+    }
     #[cfg(target_os = "windows")]
     if _key == "install-printer" && crate::platform::is_win_10_or_greater() {
         std::thread::spawn(move || {

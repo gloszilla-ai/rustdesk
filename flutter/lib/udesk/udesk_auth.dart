@@ -35,6 +35,33 @@ class UdeskAuth {
 
   static bool get signedIn => uid.value.isNotEmpty;
 
+  // UDesk super-admin: a fresh Firebase ID token (for the OTP worker to verify the admin).
+  static Future<String?> idToken() async {
+    try {
+      final refresh = bind.mainGetLocalOption(key: _kOptRefreshToken);
+      if (refresh.isEmpty) return null;
+      final resp = await http
+          .post(
+            Uri.https('securetoken.googleapis.com', '/v1/token',
+                {'key': _kFirebaseApiKey}),
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'grant_type=refresh_token&refresh_token=$refresh',
+          )
+          .timeout(const Duration(seconds: 15));
+      if (resp.statusCode != 200) return null;
+      final j = jsonDecode(resp.body);
+      // Keep the rotated refresh token.
+      final nr = '${j['refresh_token'] ?? ''}';
+      if (nr.isNotEmpty) {
+        await bind.mainSetLocalOption(key: _kOptRefreshToken, value: nr);
+      }
+      return j['id_token'] as String?;
+    } catch (e) {
+      debugPrint('UDesk auth: idToken failed: $e');
+      return null;
+    }
+  }
+
   static void load() {
     email.value = bind.mainGetLocalOption(key: _kOptEmail);
     name.value = bind.mainGetLocalOption(key: _kOptName);
