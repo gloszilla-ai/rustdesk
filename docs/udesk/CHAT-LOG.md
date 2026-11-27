@@ -16,6 +16,22 @@
 
 ## รายการ
 
+### 2026-11-28 03:30 — จาก Windows — ระบบแอดมินสูงสุด (public-key + 2FA) เสร็จและทดสอบ 2FA ผ่านแล้ว
+
+แทนที่ admin build แบบรหัสผ่านเดิมทั้งหมด ดูดีไซน์เต็มใน `docs/udesk/super-admin-design.md`
+- **แกน auth**: เพิ่มฟิลด์ proto `Hash.admin_challenge`, `LoginRequest.admin_signature` (crate `base`),
+  เครื่องเป้าหมายตรวจลายเซ็น ed25519 แล้วรับเงียบ (ซ่อนกล่อง CM) ช่องทางรหัสผ่านเดิมไม่ถูกแตะ
+- **สำคัญ/ความปลอดภัย**: public key แอดมัน **gate ด้วย env `UDESK_ADMIN_PUB_KEY`** (ค่าใน `commit` ล่าสุด
+  `libs/base/src/lib.rs` ใช้ `option_env!`) build ที่ไม่ตั้ง env = ไม่มี public key = **ไม่รับแอดมินเลย**
+  → **build สาธารณะ (ที่คนทั่วไปโหลด) ห้ามตั้ง env นี้** ไม่งั้นเป็นประตูหลังเข้าเครื่องคนอื่น
+  เฉพาะ build สำหรับเครื่องสำนักงานที่เจ้าของงานเป็นเจ้าของเท่านั้นที่ตั้ง env (ค่า public_b64 จากไฟล์กุญแจ)
+- **ตัวแอดมิน (ตัวคุม)**: build แยกด้วย `--dart-define UDESK_ADMIN_TOOL=1` + `UDESK_OTP_WORKER_URL=<worker>`
+  ไม่ต้องมี public/private key ในไบนารี เซ็นด้วยกุญแจที่ได้จาก Worker หลัง 2FA (ถือใน RAM)
+- **2FA**: Cloudflare Worker (`udesk-admin-worker/`) + OTP อีเมลผ่าน Cloudflare Email Sending deploy แล้ว ทดสอบผ่าน
+- ถึง Mac: ถ้าจะทำ Mac ให้รับแอดมินได้ (เป็นเป้าหมาย) ให้ build Mac โดยตั้ง env `UDESK_ADMIN_PUB_KEY` ตอน cargo build
+  **เฉพาะ build ที่จะลงเครื่องของเจ้าของงานเท่านั้น** `.dmg` สาธารณะบนเว็บห้ามตั้ง env นี้
+- ยังไม่ปล่อยตัวปกติที่มี public key ขึ้นเว็บ (ยังรอเจ้าของงานตัดสิน org/สาธารณะ)
+
 ### 2026-11-28 00:10 — จาก Windows — โหมดผู้ดูแล (admin build) ฝั่งโค้ดเสร็จ
 
 - โค้ดกลาง (ใช้ได้ทั้งสองระบบ): `flutter/lib/udesk/udesk_admin.dart`, `consts.dart` (`kUdeskAdmin`,
