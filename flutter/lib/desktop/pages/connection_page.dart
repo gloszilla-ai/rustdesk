@@ -133,7 +133,7 @@ class _OnlineStatusWidgetState extends State<OnlineStatusWidget> {
             if (!isIncomingOnly) startServiceWidget(),
             // ready && public
             // No need to show the guide if is custom client.
-            if (!isIncomingOnly) setupServerWidget(),
+            if (!isIncomingOnly && !bind.isCustomClient()) setupServerWidget(),
           ],
         );
 
@@ -313,9 +313,8 @@ class _ConnectionPageState extends State<ConnectionPage>
               children: [
                 Flexible(child: _buildRemoteIDTextField(context)),
               ],
-            ).marginOnly(top: 22),
+            ).marginOnly(top: 16, right: 12),
             SizedBox(height: 12),
-            Divider().paddingOnly(right: 12),
             Expanded(child: PeerTabPage()),
           ],
         ).paddingOnly(left: 12.0)),
@@ -377,16 +376,16 @@ class _ConnectionPageState extends State<ConnectionPage>
   /// Search for a peer.
   Widget _buildRemoteIDTextField(BuildContext context) {
     var w = Container(
-      width: 320 + 20 * 2,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
           borderRadius: const BorderRadius.all(Radius.circular(13)),
           border: Border.all(color: Theme.of(context).colorScheme.background)),
       child: Ink(
-        child: Column(
+        child: Row(
           children: [
-            getConnectionPageTitle(context, false).marginOnly(bottom: 15),
-            Row(
+            Expanded(
+                child: Row(
               children: [
                 Expanded(
                     child: RawAutocomplete<Peer>(
@@ -453,8 +452,7 @@ class _ConnectionPageState extends State<ConnectionPage>
                           keyboardType: TextInputType.visiblePassword,
                           focusNode: fieldFocusNode,
                           style: const TextStyle(
-                            fontFamily: 'WorkSans',
-                            fontSize: 22,
+                            fontSize: 18,
                             height: 1.4,
                           ),
                           maxLines: 1,
@@ -547,12 +545,12 @@ class _ConnectionPageState extends State<ConnectionPage>
                   },
                 )),
               ],
-            ),
+            )),
             Padding(
-              padding: const EdgeInsets.only(top: 13.0),
-              child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              padding: const EdgeInsets.only(left: 12.0),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
                 SizedBox(
-                  height: 28.0,
+                  height: 46.0,
                   child: ElevatedButton(
                     onPressed: () {
                       onConnect();
@@ -562,8 +560,8 @@ class _ConnectionPageState extends State<ConnectionPage>
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  height: 28.0,
-                  width: 28.0,
+                  height: 46.0,
+                  width: 46.0,
                   decoration: BoxDecoration(
                     border: Border.all(color: Theme.of(context).dividerColor),
                     borderRadius: BorderRadius.circular(8),
@@ -659,6 +657,6 @@ class _ConnectionPageState extends State<ConnectionPage>
       ),
     );
     return Container(
-        constraints: const BoxConstraints(maxWidth: 600), child: w);
+        constraints: const BoxConstraints(maxWidth: double.infinity), child: w);
   }
 }

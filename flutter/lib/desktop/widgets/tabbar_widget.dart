@@ -535,7 +535,10 @@ class _DesktopTabState extends State<DesktopTab>
                 SizedBox(
                   height:
                       showBottomDivider ? _kTabBarHeight - 1 : _kTabBarHeight,
-                  child: _buildBar(),
+                  child: Theme(
+                      data: MyTheme.darkTheme,
+                      child: Container(
+                          color: const Color(0xFF071A4D), child: _buildBar())),
                 ),
                 if (showBottomDivider)
                   const Divider(
@@ -653,10 +656,13 @@ class _DesktopTabState extends State<DesktopTab>
                         ),
                         Offstage(
                             offstage: !showTitle,
-                            child: const Text(
-                              "RustDesk",
-                              style: TextStyle(fontSize: 13),
-                            ).marginOnly(left: 2))
+                            child: Text(
+                              bind.mainGetAppNameSync(),
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white),
+                            ).marginOnly(left: 6))
                       ]).marginOnly(
                         left: 5,
                         right: 10,

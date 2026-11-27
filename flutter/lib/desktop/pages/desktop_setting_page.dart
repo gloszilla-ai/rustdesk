@@ -280,27 +280,76 @@ class _DesktopSettingPageState extends State<DesktopSettingPage>
       backgroundColor: Theme.of(context).colorScheme.background,
       body: _buildBlock(
         children: <Widget>[
-          SizedBox(
-            width: _kTabWidth,
-            child: Column(
-              children: [
-                _header(context),
-                Flexible(child: _listView(tabs: _settingTabs())),
-              ],
-            ),
-          ),
-          const VerticalDivider(width: 1),
           Expanded(
-            child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: PageView(
-                controller: controller,
-                physics: NeverScrollableScrollPhysics(),
-                children: _children(),
+            child: Column(children: [
+              _udeskTabBar(context, _settingTabs()),
+              const Divider(height: 1),
+              Expanded(
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  padding: const EdgeInsets.only(right: _kCardLeftMargin),
+                  child: PageView(
+                    controller: controller,
+                    physics: NeverScrollableScrollPhysics(),
+                    children: _children(),
+                  ),
+                ),
               ),
-            ),
+            ]),
           )
         ],
+      ),
+    );
+  }
+
+  // UDesk: the settings sections are a horizontal tab bar across the top.
+  Widget _udeskTabBar(BuildContext context, List<_TabInfo> tabs) {
+    return Container(
+      height: 52,
+      color: Theme.of(context).colorScheme.background,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: tabs
+            .map((tab) => Obx(() {
+                  final selected = tab.key == selectedTab.value;
+                  final color = selected ? _accentColor : null;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(9),
+                    onTap: () {
+                      if (selectedTab.value != tab.key) {
+                        int index =
+                            DesktopSettingPage.tabKeys.indexOf(tab.key);
+                        if (index == -1) {
+                          return;
+                        }
+                        controller.jumpToPage(index);
+                      }
+                      selectedTab.value = tab.key;
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                          color: selected
+                              ? _accentColor.withOpacity(0.12)
+                              : null,
+                          borderRadius: BorderRadius.circular(9)),
+                      child: Row(children: [
+                        Icon(selected ? tab.selected : tab.unselected,
+                            color: color, size: 18),
+                        const SizedBox(width: 8),
+                        Text(translate(tab.label),
+                            style: TextStyle(
+                                color: color,
+                                fontSize: 14,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400)),
+                      ]),
+                    ),
+                  ).marginOnly(right: 4);
+                }))
+            .toList(),
       ),
     );
   }
@@ -412,9 +461,7 @@ class _GeneralState extends State<_General> {
   @override
   Widget build(BuildContext context) {
     final scrollController = ScrollController();
-    return ListView(
-      controller: scrollController,
-      children: [
+    return _cardColumns(controller: scrollController, [
         if (!isWeb) service(),
         theme(),
         _Card(title: 'Language', children: [language()]),
@@ -1036,7 +1083,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
             }),
             preventMouseKeyBuilder(
               block: locked,
-              child: Column(children: [
+              child: _cardColumns(scroll: false, [
                 permissions(context),
                 password(context),
                 _Card(title: '2FA', children: [tfa()]),
@@ -1815,7 +1862,7 @@ class _NetworkState extends State<_Network> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return ListView(controller: scrollController, children: [
+    return _cardColumns(controller: scrollController, [
       _lock(locked, 'Unlock Network Settings', () {
         locked = false;
         setState(() => {});
@@ -2008,7 +2055,7 @@ class _DisplayState extends State<_Display> {
   @override
   Widget build(BuildContext context) {
     final scrollController = ScrollController();
-    return ListView(controller: scrollController, children: [
+    return _cardColumns(controller: scrollController, [
       viewStyle(context),
       scrollStyle(context),
       imageQuality(context),
@@ -2426,7 +2473,7 @@ class __PrinterState extends State<_Printer> {
   @override
   Widget build(BuildContext context) {
     final scrollController = ScrollController();
-    return ListView(controller: scrollController, children: [
+    return _cardColumns(controller: scrollController, [
       outgoing(context),
       incoming(context),
     ]).marginOnly(bottom: _kListViewBottomMargin);
@@ -2603,7 +2650,7 @@ class _AboutState extends State<_About> {
                 height: 8.0,
               ),
               SelectionArea(
-                  child: Text('${translate('Version')}: $version')
+                  child: Text('${translate('Version')}: $kUDeskVersion')
                       .marginSymmetric(vertical: 4.0)),
               SelectionArea(
                   child: Text('${translate('Build Date')}: $buildDate')
@@ -2620,52 +2667,17 @@ class _AboutState extends State<_About> {
                     launchUrlString('https://github.com/gloszilla-ai/rustdesk');
                   },
                   child: const Text(
-                    'UDesk is based on RustDesk (AGPL-3.0). Source code',
+                    'Powered by RustDesk (AGPL-3.0)',
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com/privacy.html');
-                  },
-                  child: Text(
-                    translate('Privacy Statement'),
-                    style: linkStyle,
-                  ).marginSymmetric(vertical: 4.0)),
-              InkWell(
-                  onTap: () {
-                    launchUrlString('https://rustdesk.com');
+                    launchUrlString('https://desk.unext.studio');
                   },
                   child: Text(
                     translate('Website'),
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
-              Container(
-                decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
-                child: SelectionArea(
-                    child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Copyright © ${DateTime.now().toString().substring(0, 4)} Purslane Tech Pte. Ltd.\n$license',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            translate('Slogan_tip'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white),
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                )),
-              ).marginSymmetric(vertical: 4.0)
             ],
           ).marginOnly(left: _kContentHMargin)
         ]),
@@ -2678,6 +2690,28 @@ class _AboutState extends State<_About> {
 
 //#region components
 
+// UDesk: settings cards flow into as many columns as the window fits.
+Widget _cardColumns(List<Widget> children,
+    {ScrollController? controller, bool scroll = true}) {
+  return LayoutBuilder(builder: (context, constraints) {
+    final n = (constraints.maxWidth / 340).floor().clamp(1, 3);
+    final cols = List.generate(n, (_) => <Widget>[]);
+    for (var i = 0; i < children.length; i++) {
+      cols[i % n].add(children[i]);
+    }
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children:
+          cols.map((c) => Expanded(child: Column(children: c))).toList(),
+    );
+    if (!scroll) return row;
+    return SingleChildScrollView(
+      controller: controller,
+      child: row.marginOnly(bottom: _kListViewBottomMargin),
+    );
+  });
+}
+
 // ignore: non_constant_identifier_names
 Widget _Card(
     {required String title,
@@ -2687,8 +2721,12 @@ Widget _Card(
     children: [
       Flexible(
         child: SizedBox(
-          width: _kCardFixedWidth,
+          width: double.infinity,
           child: Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Color(0x338091B5))),
             child: Column(
               children: [
                 Row(
@@ -3052,7 +3090,11 @@ Widget _SubLabeledWidget(BuildContext context, String label, Widget child,
       SizedBox(
         width: 10,
       ),
-      child,
+      Flexible(
+          child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: child)),
     ],
   ).marginOnly(left: _kContentHSubMargin);
 }

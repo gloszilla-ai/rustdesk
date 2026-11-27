@@ -203,8 +203,15 @@ pub fn translate(name: String) -> String {
 }
 
 pub fn translate_locale(name: String, locale: &str) -> String {
+    // UDesk: Thai unless the user picked a language in Settings.
+    let lang_option = hbb_common::config::LocalConfig::get_option("lang");
+    let lang_option = if lang_option.is_empty() {
+        "th".to_owned()
+    } else {
+        lang_option
+    };
     let lang = resolve_lang(
-        &hbb_common::config::LocalConfig::get_option("lang"),
+        &lang_option,
         locale,
         cjk_ui_unavailable(),
     );

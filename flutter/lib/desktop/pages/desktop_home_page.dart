@@ -59,6 +59,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   Widget build(BuildContext context) {
     super.build(context);
     final isIncomingOnly = bind.isIncomingOnly();
+    if (!isIncomingOnly && !bind.isOutgoingOnly()) {
+      return _buildBlock(child: _buildUdeskHome(context));
+    }
     return _buildBlock(
         child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,16 +78,190 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         block: _block, mask: true, use: canBeBlocked, child: child);
   }
 
-  Widget buildLeftPane(BuildContext context) {
+  // UDesk home layout: ID and password in a full-width header band, the connection page below.
+  Widget _buildUdeskHome(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildUdeskHeader(context),
+        buildPresetPasswordWarning(),
+        Obx(() => buildHelpCards(stateGlobal.updateUrl.value)),
+        Expanded(child: buildRightPane(context)),
+      ],
+    );
+  }
+
+  Widget _buildUdeskHeader(BuildContext context) {
+    const labelStyle = TextStyle(fontSize: 12, color: Color(0xFFC9D8FF));
+    Widget iconButton(IconData icon, String tip, VoidCallback onTap) => Tooltip(
+          message: translate(tip),
+          child: Material(
+            color: Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: onTap,
+              child: SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: Icon(icon, size: 16, color: Colors.white)),
+            ),
+          ),
+        );
+    return ChangeNotifierProvider.value(
+      value: gFFI.serverModel,
+      child: Consumer<ServerModel>(builder: (context, model, child) {
+        final showOneTime = model.approveMode != 'click' &&
+            model.verificationMethod != kUsePermanentPassword;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: const BoxDecoration(
+              gradient: LinearGradient(
+            colors: [Color(0xFF071A4D), Color(0xFF0A3FBF), Color(0xFF0A74E8)],
+            stops: [0, 0.55, 1],
+          )),
+          child: Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(translate("ID"), style: labelStyle),
+                  Row(children: [
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: model.serverId,
+                      builder: (_, v, __) => Text(v.text,
+                          style: const TextStyle(
+                              fontSize: 30,
+                              height: 1.25,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1,
+                              color: Colors.white)),
+                    ),
+                    const SizedBox(width: 10),
+                    iconButton(Icons.copy_rounded, 'Copy', () {
+                      Clipboard.setData(
+                          ClipboardData(text: model.serverId.text));
+                      showToast(translate("Copied"));
+                    }),
+                  ]),
+                ],
+              ),
+              Container(
+                width: 1,
+                height: 44,
+                margin: const EdgeInsets.symmetric(horizontal: 28),
+                color: Colors.white.withOpacity(0.22),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(translate("One-time Password"), style: labelStyle),
+                  Row(children: [
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: model.serverPasswd,
+                      builder: (_, v, __) => Text(v.text,
+                          style: const TextStyle(
+                              fontSize: 20,
+                              height: 1.6,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.5,
+                              color: Colors.white)),
+                    ),
+                    const SizedBox(width: 10),
+                    if (showOneTime)
+                      iconButton(Icons.refresh_rounded, 'Refresh Password',
+                          () => bind.mainUpdateTemporaryPassword()),
+                    if (showOneTime) const SizedBox(width: 6),
+                    if (!bind.isDisableSettings())
+                      iconButton(
+                          Icons.edit_rounded,
+                          'Change Password',
+                          () => DesktopSettingPage.switch2page(
+                              SettingsTabKey.safety)),
+                  ]),
+                ],
+              ),
+              const Spacer(),
+              Text('${bind.mainGetAppNameSync()} v$kUDeskVersion',
+                  style: labelStyle),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  // UDesk: a help card is a slim full-width banner under the header.
+  Widget _buildUdeskBanner(String title, String content, String btnText,
+      GestureTapCallback onPressed,
+      {String? help, String? link, VoidCallback? onClose}) {
+    final text = [
+      if (title.isNotEmpty) translate(title),
+      if (content.isNotEmpty) translate(content),
+    ].join(': ');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      decoration: const BoxDecoration(
+          gradient: LinearGradient(
+              colors: [Color(0xFFD96F00), Color(0xFFF59A10)])),
+      child: Row(children: [
+        const Icon(Icons.info_outline_rounded, size: 18, color: Colors.white),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 13, height: 1.4, color: Colors.white)),
+        ),
+        if (help != null && link != null)
+          InkWell(
+            onTap: () async => await launchUrl(Uri.parse(link)),
+            child: Text(translate(help),
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    decoration: TextDecoration.underline)),
+          ).marginOnly(left: 12),
+        if (btnText.isNotEmpty)
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onPressed,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text(translate(btnText),
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFB85A00))),
+            ),
+          ).marginOnly(left: 12),
+        if (onClose != null)
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 18),
+            onPressed: onClose,
+          ),
+      ]),
+    );
+  }
+
+  // UDesk: the left pane is always dark blue, so its widgets resolve colors from a dark theme.
+  Widget buildLeftPane(BuildContext context) => Theme(
+      data: MyTheme.darkTheme.copyWith(
+          scaffoldBackgroundColor: Colors.white24,
+          inputDecorationTheme: const InputDecorationTheme(filled: false),
+          colorScheme: MyTheme.darkTheme.colorScheme
+              .copyWith(background: Colors.transparent)),
+      child: Builder(builder: _buildLeftPane));
+
+  Widget _buildLeftPane(BuildContext context) {
     final isIncomingOnly = bind.isIncomingOnly();
     final isOutgoingOnly = bind.isOutgoingOnly();
     final children = <Widget>[
       if (!isOutgoingOnly) buildPresetPasswordWarning(),
-      if (bind.isCustomClient())
-        Align(
-          alignment: Alignment.center,
-          child: loadPowered(context),
-        ),
       Align(
         alignment: Alignment.center,
         child: loadLogo(),
@@ -130,7 +307,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       value: gFFI.serverModel,
       child: Container(
         width: isIncomingOnly ? 280.0 : 200.0,
-        color: Theme.of(context).colorScheme.background,
+        decoration: const BoxDecoration(
+            gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF071A4D), Color(0xFF0A3FBF), Color(0xFF0A8BE0)],
+        )),
         child: Stack(
           children: [
             Column(
@@ -145,6 +327,16 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 Expanded(child: Container())
               ],
             ),
+            if (bind.isCustomClient())
+              Positioned(
+                bottom: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text('${bind.mainGetAppNameSync()} v$kUDeskVersion',
+                      style: TextStyle(fontSize: 12, color: Colors.white70)),
+                ),
+              ),
             if (isOutgoingOnly)
               Positioned(
                 bottom: 6,
@@ -196,7 +388,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         children: [
           Container(
             width: 2,
-            decoration: const BoxDecoration(color: MyTheme.accent),
+            decoration: const BoxDecoration(color: Color(0xFFF58A00)),
           ).marginOnly(top: 5),
           Expanded(
             child: Padding(
@@ -303,7 +495,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           Container(
             width: 2,
             height: 52,
-            decoration: BoxDecoration(color: MyTheme.accent),
+            decoration: BoxDecoration(color: Color(0xFFF58A00)),
           ),
           Expanded(
             child: Padding(
@@ -618,6 +810,13 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       }
     }
 
+    if (!bind.isIncomingOnly() && !bind.isOutgoingOnly()) {
+      return _buildUdeskBanner(title, content, btnText, onPressed,
+          help: help,
+          link: link,
+          onClose: closeButton == true ? closeCard : null);
+    }
+
     return Stack(
       children: [
         Container(
@@ -629,8 +828,8 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  Color.fromARGB(255, 226, 66, 188),
-                  Color.fromARGB(255, 244, 114, 124),
+                  Color.fromARGB(255, 240, 110, 0),
+                  Color.fromARGB(255, 247, 160, 20),
                 ],
               )),
               padding: EdgeInsets.all(20),

@@ -153,10 +153,14 @@ class _PeerTabPageState extends State<PeerTabPage>
           final deco = BoxDecoration(
               color: Theme.of(context).colorScheme.background,
               borderRadius: BorderRadius.circular(6));
-          final decoBorder = BoxDecoration(
-              border: Border(
-            bottom: BorderSide(width: 2, color: color!),
-          ));
+          final decoBorder = isDesktop
+              ? BoxDecoration(
+                  color: MyTheme.accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8))
+              : BoxDecoration(
+                  border: Border(
+                  bottom: BorderSide(width: 2, color: color!),
+                ));
           counter += 1;
           return ReorderableDragStartListener(
               key: ValueKey(t),
@@ -170,7 +174,20 @@ class _PeerTabPageState extends State<PeerTabPage>
                         decoration: (hover.value
                             ? (selected ? decoBorder : deco)
                             : (selected ? decoBorder : null)),
-                        child: Icon(model.tabIcon(t), color: color)
+                        child: (isDesktop
+                                ? Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Icon(model.tabIcon(t),
+                                        color: color, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(model.tabTooltip(t),
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            color: color,
+                                            fontWeight: selected
+                                                ? FontWeight.w600
+                                                : FontWeight.w400)),
+                                  ]).paddingSymmetric(horizontal: 6)
+                                : Icon(model.tabIcon(t), color: color))
                             .paddingSymmetric(horizontal: 4),
                       ).paddingSymmetric(horizontal: 4),
                       onTap: isOptionFixed(kOptionPeerTabIndex)
