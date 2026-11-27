@@ -6,14 +6,16 @@
 //   2. a one-time code emailed to the admin.
 // The admin binary bakes no private key; without passing both factors it cannot sign.
 //
-// Secrets / vars (set with `wrangler secret put` or in the dashboard):
-//   FIREBASE_PROJECT   = "utc-next"                 (var)
-//   ADMIN_UID          = the admin's Firebase UID    (var)
-//   ADMIN_EMAIL        = where the OTP is sent        (secret)
-//   SENDER_EMAIL       = a verified Resend sender     (var, e.g. "udesk@your-domain")
-//   RESEND_API_KEY     = Resend API key               (secret)
-//   ADMIN_PRIVATE_KEY  = sodium 64-byte secret, base64 (secret)  <- the key being protected
-// KV binding: OTP_KV  (stores the pending OTP, short-lived)
+// Email is sent through Cloudflare Email Service (send_email binding), no third party.
+// Vars / secrets (wrangler secret put, or the dashboard):
+//   FIREBASE_PROJECT   = "utc-next"                       (var)
+//   ADMIN_UID          = the admin's Firebase UID          (var)
+//   SENDER_EMAIL       = a from-address on an onboarded     (var, e.g. "udesk@unext.studio")
+//                        Email-Sending domain
+//   ADMIN_EMAIL        = where the OTP is sent (must be a   (secret)
+//                        VERIFIED destination on Free plan)
+//   ADMIN_PRIVATE_KEY  = sodium 64-byte secret, base64      (secret)  <- the key being protected
+// Bindings: OTP_KV (KV, stores the pending OTP) and EMAIL (send_email)
 //
 // Endpoints (POST, JSON):
 //   /request-otp  { idToken }          -> emails an OTP, {ok:true}
@@ -49,20 +51,16 @@ async function requestOtp(env) {
   await env.OTP_KV.put("otp:" + env.ADMIN_UID, JSON.stringify(record), {
     expirationTtl: OTP_TTL_SECONDS,
   });
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  try {
+    await env.EMAIL.send({
       from: env.SENDER_EMAIL,
       to: env.ADMIN_EMAIL,
       subject: `UDesk Admin code: ${otp}`,
       text: `Your UDesk admin verification code is ${otp}. It expires in 5 minutes. If you did not request it, ignore this email.`,
-    }),
-  });
-  if (!res.ok) return json({ error: "email failed" }, 502);
+    });
+  } catch (e) {
+    return json({ error: "email failed: " + (e.code || e.message || "") }, 502);
+  }
   return json({ ok: true });
 }
 

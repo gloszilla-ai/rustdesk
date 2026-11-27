@@ -2,15 +2,17 @@ name = "udesk-admin-otp"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 
-# Non-secret vars. Set the secrets separately (see README): ADMIN_EMAIL, RESEND_API_KEY,
-# ADMIN_PRIVATE_KEY.
 [vars]
 FIREBASE_PROJECT = "utc-next"
-# Fill these in:
 ADMIN_UID = "PUT_ADMIN_FIREBASE_UID_HERE"
-SENDER_EMAIL = "UDesk <udesk@your-verified-domain>"
+# A from-address on a domain onboarded to Cloudflare Email Sending (unext.studio is onboarded).
+SENDER_EMAIL = "UDesk <udesk@unext.studio>"
 
-# Create the KV namespace first (see README) and paste its id here.
+# Cloudflare Email Sending binding (no third-party provider).
+[[send_email]]
+name = "EMAIL"
+
+# Create the KV namespace (`npx wrangler kv namespace create OTP_KV`) and paste its id here.
 [[kv_namespaces]]
 binding = "OTP_KV"
 id = "PUT_KV_NAMESPACE_ID_HERE"
