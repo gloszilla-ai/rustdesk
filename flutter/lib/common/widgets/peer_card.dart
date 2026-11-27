@@ -301,6 +301,8 @@ class _PeerCardState extends State<_PeerCard>
             ? peer.hostname
             : '${peer.username}${peer.username.isNotEmpty && peer.hostname.isNotEmpty ? '@' : ''}${peer.hostname}');
     final thumb = UdeskThumb.imageFor(peer.id);
+    // UDesk: show the last desktop image only while the device is online; offline is black.
+    final showThumb = thumb != null && peer.online;
     final child = Card(
       color: Colors.transparent,
       elevation: 0,
@@ -320,8 +322,10 @@ class _PeerCardState extends State<_PeerCard>
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: str2color('${peer.id}${peer.platform}', 0x7f),
-                      image: thumb == null
+                      color: peer.online
+                          ? str2color('${peer.id}${peer.platform}', 0x7f)
+                          : const Color(0xFF0B0B0D),
+                      image: !showThumb
                           ? null
                           : DecorationImage(
                               image: thumb,
@@ -335,11 +339,11 @@ class _PeerCardState extends State<_PeerCard>
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: thumb == null
+                            mainAxisAlignment: !showThumb
                                 ? MainAxisAlignment.start
                                 : MainAxisAlignment.end,
                             children: [
-                              if (thumb == null)
+                              if (!showThumb)
                                 Container(
                                   padding: const EdgeInsets.all(6),
                                   child: getPlatformImage(peer.platform,
