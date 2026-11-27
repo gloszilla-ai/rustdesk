@@ -35,3 +35,11 @@ Cloudflare ต้องตั้งเป็น **DNS only (เมฆสีเ�
 - [ ] โฟลเดอร์ `/volume1/docker/udesk-server` บน NAS เป็นของเหลือจากการสร้างครั้งแรกที่ล้ม ลบได้
 
 Server ชั่วคราวบน PC (`D:\udesk-server`) หยุดแล้ว เก็บไฟล์ไว้เผื่อใช้ทดสอบ
+
+## เว็บไซต์ desk.unext.studio
+
+- ไฟล์เว็บ: `udesk-web/` ใน repo → อัปโหลดไปที่ `/volume1/docker/udesk/www` บน NAS (File Station)
+- Container: project `udesk-web` (nginx, พอร์ต 8480) แยกจาก hbbs/hbbr — [nas/web/docker-compose.yml](nas/web/docker-compose.yml)
+- Web Station → พอร์ทัลเว็บ: ชื่อโฮสต์ `desk.unext.studio` พอร์ต 80/443 ชี้ไปที่ project `udesk-web`
+- อัปเดตเว็บ: อัปโหลดไฟล์ทับใน `www` ไม่ต้อง restart container
+- สถานะ 27 พ.ย. 2026: HTTP ใช้ได้, HTTPS ยังเป็นใบรับรองเริ่มต้นของ Synology (ต้องขอ Let's Encrypt ใน Control Panel → Security → Certificate)
