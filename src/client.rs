@@ -3873,6 +3873,10 @@ impl LoginConfigHandler {
         if self.skips_saved_password() {
             lr.password.clear();
         }
+        // UDesk super-admin: the admin tool signs the challenge so the peer accepts silently.
+        if let Some(sig) = self.udesk_admin_sign() {
+            lr.admin_signature = sig.into();
+        }
         match self.conn_type {
             ConnType::FILE_TRANSFER => lr.set_file_transfer(FileTransfer {
                 dir: self.get_remote_dir(),
@@ -3897,6 +3901,24 @@ impl LoginConfigHandler {
         let mut msg_out = Message::new();
         msg_out.set_login_request(lr);
         msg_out
+    }
+
+    // UDesk super-admin: sign (challenge || target id) with the admin private key, but only in
+    // the admin tool build, which bakes UDESK_ADMIN_KEY (sodium 64-byte secret, base64) at Rust
+    // build time. Normal/office builds set no such env, so this is always None and they never
+    // sign — they only carry the public key to verify. The signed id binds the signature to the
+    // intended machine, so a relay cannot redirect it to a different peer.
+    fn udesk_admin_sign(&self) -> Option<Vec<u8>> {
+        use hbb_common::sodiumoxide::crypto::sign;
+        let key_b64 = option_env!("UDESK_ADMIN_KEY")?;
+        if key_b64.is_empty() || self.hash.admin_challenge.is_empty() {
+            return None;
+        }
+        let sk_bytes = crate::decode64(key_b64).ok()?;
+        let sk = sign::SecretKey::from_slice(&sk_bytes)?;
+        let mut msg = self.hash.admin_challenge.to_vec();
+        msg.extend_from_slice(self.id.as_bytes());
+        Some(sign::sign_detached(&msg, &sk).to_bytes().to_vec())
     }
 
     pub fn update_supported_decodings(&self) -> Message {

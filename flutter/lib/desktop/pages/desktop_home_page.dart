@@ -196,6 +196,21 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 ],
               ),
               const Spacer(),
+              if (kUdeskAdminTool)
+                Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59A10),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text('ผู้ดูแลสูงสุด',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF071A4D))),
+                ),
               Text('${bind.mainGetAppNameSync()} v$kUDeskVersion',
                   style: labelStyle),
             ],

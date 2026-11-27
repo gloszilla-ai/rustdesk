@@ -54,6 +54,14 @@ const String _kUdeskAdminFlag = String.fromEnvironment('UDESK_ADMIN');
 const bool kUdeskAdmin = _kUdeskAdminFlag == '1' || _kUdeskAdminFlag == 'true';
 const String kUdeskAdminPassword = String.fromEnvironment('UDESK_ADMIN_PASSWORD');
 
+// UDesk super-admin TOOL (the single admin's own controlling build). Distinct look so the
+// admin knows they are in the admin tool. Built with --dart-define UDESK_ADMIN_TOOL=1, paired
+// with the Rust env UDESK_ADMIN_KEY that bakes the admin private key for signing. The normal
+// office build sets neither, so it only verifies with the public key and never signs.
+const String _kUdeskAdminToolFlag = String.fromEnvironment('UDESK_ADMIN_TOOL');
+const bool kUdeskAdminTool =
+    _kUdeskAdminToolFlag == '1' || _kUdeskAdminToolFlag == 'true';
+
 const String kAppTypeMain = "main";
 
 /// [kAppTypeConnectionManager] only for 'Desktop CM Page'
