@@ -12,6 +12,7 @@ import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
 import 'package:flutter_hbb/udesk/udesk_auth.dart';
 import 'package:flutter_hbb/udesk/udesk_thumb.dart';
+import 'package:flutter_hbb/udesk/udesk_update.dart';
 import 'package:flutter_hbb/common/widgets/keyboard_shortcuts/page_body.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_keyboard_shortcuts_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_tab_page.dart';
@@ -2668,6 +2669,34 @@ class _AboutState extends State<_About> {
               SelectionArea(
                   child: Text('${translate('Version')}: $kUDeskVersion')
                       .marginSymmetric(vertical: 4.0)),
+              if (isWindows)
+                Obx(() {
+                  final status = UdeskUpdate.status.value;
+                  final downloading = UdeskUpdate.progress.value >= 0;
+                  final message = UdeskUpdate.error.value.isNotEmpty
+                      ? UdeskUpdate.error.value
+                      : UdeskUpdate.statusText;
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      OutlinedButton(
+                        onPressed: status == 'checking' || downloading
+                            ? null
+                            : () => UdeskUpdate.check(),
+                        child: Text(UdeskUpdate.checkText),
+                      ),
+                      if (status == 'available')
+                        ElevatedButton(
+                          onPressed:
+                              downloading ? null : () => UdeskUpdate.install(),
+                          child: Text(UdeskUpdate.buttonText),
+                        ),
+                      if (message.isNotEmpty) Text(message),
+                    ],
+                  ).marginSymmetric(vertical: 6.0);
+                }),
               InkWell(
                   onTap: () {
                     launchUrlString('https://github.com/gloszilla-ai/rustdesk');

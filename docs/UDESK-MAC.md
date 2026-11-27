@@ -17,7 +17,7 @@ UDesk คือ fork ของ [RustDesk](https://github.com/rustdesk/rustdesk) 
 | เว็บไซต์ | `https://desk.unext.studio` — Firebase Hosting site `unext-desk` ใน project `utc-next` (ซอร์สใน `udesk-web/`) |
 | Public key ของเซิร์ฟเวอร์ | ฝังอยู่ใน `libs/hbb_common/src/config.rs` (`RS_PUB_KEY`) |
 | ชื่อแอป / org | `UDesk` / `com.udesk` (`APP_NAME`, `ORG` ใน `config.rs`) |
-| เวอร์ชันที่ผู้ใช้เห็น | `1.0.1` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
+| เวอร์ชันที่ผู้ใช้เห็น | `1.0.2` (`kUDeskVersion` ใน `flutter/lib/consts.dart`) |
 
 เลขเวอร์ชันของ crate ยังเป็น `1.5.3` โดยตั้งใจ เพราะเครื่องสองฝั่งใช้เลขนี้เทียบกันว่าจะเปิดฟีเจอร์ไหน **อย่าเปลี่ยน**
 
@@ -110,7 +110,7 @@ flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs \
    และใช้ปุ่มไฟจราจรของระบบ ตรวจว่าแถบน้ำเงินเข้มเข้ากับปุ่มของระบบ
 5. **Google login:** flow ใช้เบราว์เซอร์ + loopback `http://127.0.0.1:<port>` ควรทำงานบน macOS ได้เลย
    **จุดเสี่ยง:** `flutter/macos/Runner/Release.entitlements` เปิด app sandbox และมีแค่ `com.apple.security.network.client` การฟังพอร์ต loopback อาจถูกบล็อก ถ้า login ค้างที่ "กำลังรอการยืนยันในเบราว์เซอร์" ให้เพิ่ม `com.apple.security.network.server`
-6. **ตัวติดตั้ง:** ทำ `.dmg` (upstream ใช้ `create-dmg` ใน workflow) ชื่อไฟล์ `UDesk-<เวอร์ชัน>-<arch>.dmg` (ตอนนี้ 1.0.1)
+6. **ตัวติดตั้ง:** ทำ `.dmg` (upstream ใช้ `create-dmg` ใน workflow) ชื่อไฟล์ `UDesk-<เวอร์ชัน>-<arch>.dmg` (ตอนนี้ 1.0.2)
    ทั้ง Apple Silicon และ Intel ถ้าทำได้
 7. **Code signing / notarization:** ต้องใช้ Apple Developer ID ของเจ้าของงาน ถ้ายังไม่มีให้แจ้งว่า
    ผู้ใช้จะเจอคำเตือน Gatekeeper และต้องคลิกขวา → Open

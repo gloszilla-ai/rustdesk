@@ -58,9 +58,38 @@ class UdeskUpdate {
     return 0;
   }
 
+  /// Result of the last check: '', 'checking', 'latest', 'available' or 'error'.
+  static final status = ''.obs;
+
+  static String get statusText {
+    switch (status.value) {
+      case 'checking':
+        return _thai ? 'กำลังตรวจสอบ…' : 'Checking…';
+      case 'latest':
+        return _thai ? 'เป็นเวอร์ชันล่าสุดแล้ว' : 'You have the latest version';
+      case 'available':
+        return _thai
+            ? 'มีเวอร์ชันใหม่ ${latest.value}'
+            : 'Version ${latest.value} is available';
+      case 'error':
+        return _thai
+            ? 'ตรวจสอบไม่สำเร็จ ลองใหม่อีกครั้ง'
+            : 'Could not check. Please try again.';
+    }
+    return '';
+  }
+
+  static String get checkText => _thai ? 'ตรวจหาอัปเดต' : 'Check for updates';
+
   /// Fire and forget: a failed check must never disturb the app.
   static Future<void> check() async {
-    if (!Platform.isWindows) return;
+    if (!Platform.isWindows || status.value == 'checking') return;
+    status.value = 'checking';
+    await _check();
+    if (status.value == 'checking') status.value = 'error';
+  }
+
+  static Future<void> _check() async {
     try {
       final resp = await http
           .get(Uri.parse(_kVersionUrl))
@@ -80,6 +109,9 @@ class UdeskUpdate {
         _url = url;
         _sha256 = sha;
         latest.value = version;
+        status.value = 'available';
+      } else {
+        status.value = 'latest';
       }
     } catch (e) {
       debugPrint('UDesk update: check failed: $e');
