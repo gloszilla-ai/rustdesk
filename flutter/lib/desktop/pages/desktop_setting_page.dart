@@ -10,6 +10,7 @@ import 'package:flutter_hbb/common/widgets/audio_input.dart';
 import 'package:flutter_hbb/common/widgets/setting_widgets.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_home_page.dart';
+import 'package:flutter_hbb/udesk/udesk_auth.dart';
 import 'package:flutter_hbb/common/widgets/keyboard_shortcuts/page_body.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_keyboard_shortcuts_page.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_tab_page.dart';
@@ -2332,7 +2333,7 @@ class _AccountState extends State<_Account> {
     return ListView(
       controller: scrollController,
       children: [
-        _Card(title: 'Account', children: [accountAction(), useInfo()]),
+        _Card(title: 'Account', children: [udeskAccount(context)]),
       ],
     ).marginOnly(bottom: _kListViewBottomMargin);
   }
@@ -2695,15 +2696,22 @@ Widget _cardColumns(List<Widget> children,
     {ScrollController? controller, bool scroll = true}) {
   return LayoutBuilder(builder: (context, constraints) {
     final n = (constraints.maxWidth / 340).floor().clamp(1, 3);
+    // An unlock button (an Offstage) spans the full width above the cards instead of
+    // taking a column slot.
+    final head = children.whereType<Offstage>().toList();
+    final cards = children.where((c) => c is! Offstage).toList();
     final cols = List.generate(n, (_) => <Widget>[]);
-    for (var i = 0; i < children.length; i++) {
-      cols[i % n].add(children[i]);
+    for (var i = 0; i < cards.length; i++) {
+      cols[i % n].add(cards[i]);
     }
-    final row = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children:
-          cols.map((c) => Expanded(child: Column(children: c))).toList(),
-    );
+    final row = Column(children: [
+      ...head,
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children:
+            cols.map((c) => Expanded(child: Column(children: c))).toList(),
+      ),
+    ]);
     if (!scroll) return row;
     return SingleChildScrollView(
       controller: controller,
