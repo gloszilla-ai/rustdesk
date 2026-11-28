@@ -16,6 +16,23 @@
 
 ## รายการ
 
+### 2026-11-28 15:00 — จาก Windows — ออก 1.0.5 ขึ้นเว็บแล้ว + เพิ่มช่องปล่อยรุ่น "ออฟฟิศ" แยก
+
+เจ้าของงานตัดสินแล้ว: ไม่ฝัง pubkey ลงตัวสาธารณะ ใช้ **2 ช่องปล่อยรุ่น** แทน (ปลอดภัย)
+- **`consts.dart` `kUDeskVersion` = 1.0.5** (bump แล้ว — Mac รุ่นถัดไปใช้ 1.0.5 เท่ากันได้ตามเดิม)
+- **เว็บ (deploy แล้ว)**: `version.json` entry `windows` = **1.0.5** ชี้ `download/UDesk-1.0.5-install.exe`
+  (**ตัวสาธารณะ ไม่มี pubkey**) / `macos` คงเดิม 1.0.3 / top-level คงเดิม 1.0.3
+- **ช่องออฟฟิศใหม่ (ไม่ลิงก์หน้าเว็บ)**: `udesk-web/office/version.json` + `download/office/UDesk-office-install.exe`
+  (**ตัวมี pubkey** สำหรับเครื่องสำนักงานเท่านั้น)
+- **โค้ดใหม่**: `flutter/lib/udesk/udesk_update.dart` → `_kVersionUrl` อ่าน `--dart-define UDESK_UPDATE_URL`
+  (default = เว็บสาธารณะ) **ตัวออฟฟิศ build ด้วย `UDESK_UPDATE_URL=.../office/version.json`** จะได้อัปเดต
+  เฉพาะตัว pubkey ไม่เผลอ downgrade; `consts.dart` เพิ่ม `kUdeskOfficeInstallUrl` (โชว์ที่หน้า About ของตัวแอดมิน)
+- `index.html`/`versions.html` → ปุ่ม Windows = 1.0.5, ย้าย 1.0.4 ไปเป็นรุ่นเก่า, mac คงเดิม
+- เอกสารสถานะเต็ม: `docs/udesk/super-admin-status.md` (สรุประบบทั้งหมด + งานที่เหลือ)
+- ถึง Mac: ถ้าจะทำ Mac ให้รับแอดมิน ให้มี **ตัวออฟฟิศ** (ตั้ง `UDESK_ADMIN_PUB_KEY` + `UDESK_UPDATE_URL=.../office/version.json`)
+  แยกจาก **ตัวสาธารณะ** (`.dmg` บนเว็บ ไม่ตั้ง env) — เติม `office/version.json` ให้มี `macos` เมื่อพร้อม
+- ถึง Mac: ตอนนี้ `consts.dart` = 1.0.5 ถ้า Mac จะ build ใช้ 1.0.5 ได้เลย ถ้าจะขยับเลขอื่นแจ้งก่อน
+
 ### 2026-11-28 14:15 — จาก Windows — ระบบแอดมินเงียบ "ไร้ร่องรอย" ทดสอบจริงครบทุกจุดแล้ว
 
 ต่อจากรายการ 03:30 — ทดสอบจริงบนเครื่องเป้าหมายแล้ว และแก้บั๊กที่ทำให้ยังไม่เงียบจริง (เป็น race ของ RustDesk

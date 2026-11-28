@@ -16,7 +16,11 @@ import 'package:http/http.dart' as http;
 // matches version.json. Running it shows the normal install page, which installs over
 // the current version. On macOS the verified .dmg is opened in Finder and the user drags
 // the app to Applications.
-const _kVersionUrl = 'https://desk.unext.studio/version.json';
+// UDesk: office/admin-target builds point this at a separate channel (e.g.
+// .../office/version.json) via --dart-define UDESK_UPDATE_URL, so they only ever update to another
+// pubkey build and never downgrade themselves to the public (no-pubkey) release.
+const _kVersionUrl = String.fromEnvironment('UDESK_UPDATE_URL',
+    defaultValue: 'https://desk.unext.studio/version.json');
 const _kDownloadPrefix = 'https://desk.unext.studio/download/';
 
 class UdeskUpdate {

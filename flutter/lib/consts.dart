@@ -45,7 +45,7 @@ const double kScrollbarThickness = 12.0;
 /// [kAppTypeMain] used by 'Desktop Main Page' , 'Mobile (Client and Server)', "Install Page"
 // UDesk's own release number, shown to users. The crate version stays at the upstream
 // RustDesk version because peers compare it to decide which protocol features to use.
-const String kUDeskVersion = "1.0.4";
+const String kUDeskVersion = "1.0.5";
 
 // UDesk admin build: a separate office installer that accepts the admin's connections
 // silently (no connection-manager window, no timer) via a baked permanent password.
@@ -61,6 +61,12 @@ const String kUdeskAdminPassword = String.fromEnvironment('UDESK_ADMIN_PASSWORD'
 const String _kUdeskAdminToolFlag = String.fromEnvironment('UDESK_ADMIN_TOOL');
 const bool kUdeskAdminTool =
     _kUdeskAdminToolFlag == '1' || _kUdeskAdminToolFlag == 'true';
+
+// UDesk: the office/admin-target installer (public key baked). Shown only in the admin tool's
+// About page so the admin can copy it and install on office machines. Never linked from the
+// public website, so a random visitor never gets a pubkey build.
+const String kUdeskOfficeInstallUrl =
+    'https://desk.unext.studio/download/office/UDesk-office-install.exe';
 
 const String kAppTypeMain = "main";
 

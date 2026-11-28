@@ -2705,6 +2705,33 @@ class _AboutState extends State<_About> {
                     translate('Website'),
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
+              // UDesk: admin tool shows the office installer link so it can be copied and used
+              // to set up office machines (the link is not published on the public website).
+              if (kUdeskAdminTool)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text('ลิงก์ติดตั้งเครื่องออฟฟิศ: ',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      Flexible(
+                        child: SelectionArea(
+                          child: Text(kUdeskOfficeInstallUrl, style: linkStyle),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'คัดลอกลิงก์',
+                        icon: const Icon(Icons.copy, size: 18),
+                        onPressed: () {
+                          Clipboard.setData(
+                              const ClipboardData(text: kUdeskOfficeInstallUrl));
+                          showToast('คัดลอกลิงก์แล้ว');
+                        },
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ).marginOnly(left: _kContentHMargin)
         ]),

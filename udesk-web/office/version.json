@@ -1,0 +1,9 @@
+{
+  "version": "1.0.5",
+  "windows": {
+    "version": "1.0.5",
+    "url": "https://desk.unext.studio/download/office/UDesk-office-install.exe",
+    "sha256": "63eeeffb0cbb8b1d293d15a754e885f859dc4c50d20ff3c0b6415af2aac68c60",
+    "size": 25825792
+  }
+}
