@@ -15,4 +15,4 @@ name = "EMAIL"
 # Create the KV namespace (`npx wrangler kv namespace create OTP_KV`) and paste its id here.
 [[kv_namespaces]]
 binding = "OTP_KV"
-id = "PUT_KV_NAMESPACE_ID_HERE"
+id = "1b4183412bde4176953d8c4ba44a4c68"

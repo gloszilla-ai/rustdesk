@@ -1223,7 +1223,7 @@ async fn handle(data: Data, stream: &mut Connection) {
             allow_err!(
                 stream
                     .send(&Data::ControlledSessionCount(
-                        crate::Connection::alive_conns().len()
+                        crate::Connection::udesk_non_admin_alive_count()
                     ))
                     .await
             );

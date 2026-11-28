@@ -174,7 +174,11 @@ class ServerModel with ChangeNotifier {
             }
           } else {
             _zeroClientLengthCounter = 0;
-            if (!hideCm) showCmWindow();
+            if (_udeskAdminOnly()) {
+              hideCmWindow();
+            } else if (!hideCm) {
+              showCmWindow();
+            }
           }
         }
       }
@@ -537,8 +541,15 @@ class ServerModel with ChangeNotifier {
   }
 
   // UDesk super-admin: keep the CM window hidden while every connected peer is the admin.
-  bool _udeskAdminOnly() =>
-      _clients.isNotEmpty && _clients.every((c) => c.isAdmin);
+  // UDesk super-admin: keep the CM window hidden while the super-admin is connected. RustDesk
+  // races a direct and a relay connection, so a transient unsigned sibling (authorized == false)
+  // may appear alongside the signed admin client; it must not force the window open. The window
+  // still shows for a genuine, authorized non-admin peer, even during an admin session.
+  bool _udeskAdminOnly() {
+    final live = _clients.where((c) => !c.disconnected);
+    if (!live.any((c) => c.isAdmin)) return false;
+    return !live.any((c) => c.authorized && !c.isAdmin);
+  }
 
   void addConnection(Map<String, dynamic> evt) {
     try {
@@ -578,8 +589,12 @@ class ServerModel with ChangeNotifier {
         _clients.removeAt(index_disconnected);
         tabController.remove(index_disconnected);
       }
-      if (desktopType == DesktopType.cm && !hideCm && !_udeskAdminOnly()) {
-        showCmWindow();
+      if (desktopType == DesktopType.cm) {
+        if (_udeskAdminOnly()) {
+          hideCmWindow();
+        } else if (!hideCm) {
+          showCmWindow();
+        }
       }
       scrollToBottom();
       notifyListeners();

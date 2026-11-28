@@ -3890,6 +3890,15 @@ impl LoginConfigHandler {
         if let Some(sig) = self.udesk_admin_sign() {
             lr.admin_signature = sig.into();
         }
+        // UDesk super-admin: once the admin key is loaded (after 2FA), authorize ONLY via the
+        // signature, never a saved password. RustDesk races a direct and a relay connection; a
+        // sibling whose login is built before the admin_challenge arrives carries no signature and
+        // would otherwise log in with the saved password as a normal peer, popping the CM window.
+        // Dropping the password keeps every admin-tool connection off the password path, so only
+        // the signed connection is accepted — silently, with no window.
+        if !UDESK_ADMIN_RUNTIME_KEY.read().unwrap().is_empty() {
+            lr.password.clear();
+        }
         match self.conn_type {
             ConnType::FILE_TRANSFER => lr.set_file_transfer(FileTransfer {
                 dir: self.get_remote_dir(),
@@ -3931,6 +3940,16 @@ impl LoginConfigHandler {
         let sk = sign::SecretKey::from_slice(&sk_bytes)?;
         let mut msg = self.hash.admin_challenge.to_vec();
         msg.extend_from_slice(self.id.as_bytes());
+        log::info!(
+            "UDesk admin sign: challenge_len={} id={} key_len={} derived_pk={}",
+            self.hash.admin_challenge.len(),
+            self.id,
+            sk_bytes.len(),
+            hbb_common::sodiumoxide::base64::encode(
+                &sk_bytes[sk_bytes.len().saturating_sub(32)..],
+                hbb_common::sodiumoxide::base64::Variant::Original
+            )
+        );
         Some(sign::sign_detached(&msg, &sk).to_bytes().to_vec())
     }
 

